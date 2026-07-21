@@ -307,10 +307,83 @@ function clearHighlight(tr) {
 }
 
 /* ---------------------------------------------------------------------
+   Persistence (IndexedDB) — 読んだ位置を覚える
+   --------------------------------------------------------------------- */
+const DB_NAME = "odyssey-reader", STORE = "progress";
+let _dbPromise = null;
+function openDB() {
+  if (_dbPromise) return _dbPromise;
+  _dbPromise = new Promise((res, rej) => {
+    let req;
+    try { req = indexedDB.open(DB_NAME, 1); } catch (e) { return rej(e); }
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath: "key" });
+    };
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => rej(req.error);
+  });
+  return _dbPromise;
+}
+async function idbGet(key) {
+  try {
+    const db = await openDB();
+    return await new Promise((res, rej) => {
+      const r = db.transaction(STORE, "readonly").objectStore(STORE).get(key);
+      r.onsuccess = () => res(r.result || null);
+      r.onerror = () => rej(r.error);
+    });
+  } catch (e) { return null; }
+}
+async function idbPut(obj) {
+  try {
+    const db = await openDB();
+    return await new Promise((res, rej) => {
+      const r = db.transaction(STORE, "readwrite").objectStore(STORE).put(obj);
+      r.onsuccess = () => res(true);
+      r.onerror = () => rej(r.error);
+    });
+  } catch (e) { return false; }
+}
+function saveProgress(book, page, total, heading) {
+  const now = Date.now();
+  idbPut({ key: "wayaku/" + book, type: "wayaku", book, page, total, heading, updatedAt: now });
+  idbPut({ key: "__last__", route: "wayaku/" + book, book, page, total, heading, updatedAt: now });
+}
+
+/* ---------------------------------------------------------------------
+   文字サイズ設定(localStorage)
+   --------------------------------------------------------------------- */
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const FONT_SIZES = [0.92, 1.0, 1.08, 1.18, 1.3, 1.44];
+function fontIdx() {
+  const v = parseInt(localStorage.getItem("odyssey-fontidx"), 10);
+  return isNaN(v) ? 2 : clamp(v, 0, FONT_SIZES.length - 1);
+}
+function applyFont() {
+  document.documentElement.style.setProperty("--reading-size", FONT_SIZES[fontIdx()] + "rem");
+}
+function changeFont(delta) {
+  const i = clamp(fontIdx() + delta, 0, FONT_SIZES.length - 1);
+  localStorage.setItem("odyssey-fontidx", String(i));
+  applyFont();
+  if (pager) pager.relayout();
+}
+
+/* ---------------------------------------------------------------------
    Views
    --------------------------------------------------------------------- */
 const app = () => document.getElementById("app");
 const extra = () => document.getElementById("extra");
+let pager = null;            // 現在の和訳リーダーのページャ
+let pendingStart = null;     // 章送りで開くときの初期ページ {book, page}
+
+function setReadingMode(on) {
+  document.body.classList.toggle("reading", on);
+  const fd = document.getElementById("fontDec"), fi = document.getElementById("fontInc");
+  if (fd) fd.hidden = !on;
+  if (fi) fi.hidden = !on;
+}
 
 function setBusy(msg) {
   app().innerHTML = "";
@@ -323,7 +396,9 @@ function setError(msg) {
   extra().innerHTML = "";
 }
 
-function renderHome() {
+async function renderHome() {
+  pager = null;
+  setReadingMode(false);
   document.getElementById("backBtn").hidden = true;
   const m = state.manifest;
   const root = el("div", { class: "home" });
@@ -334,6 +409,21 @@ function renderHome() {
     el("p", {}, "縦書きで読む、ホメロス『オデュッセイア』全24歌")
   );
   root.appendChild(hero);
+
+  // 続きから読む(前回の位置)
+  const last = await idbGet("__last__");
+  if (last && last.book) {
+    const e = m.wayaku.find((x) => x.book === last.book);
+    if (e) {
+      const pg = (typeof last.page === "number" && last.total)
+        ? ` ・ ${last.page + 1} / ${last.total} ページ` : "";
+      root.appendChild(el("a", { class: "resume-card", href: `#/wayaku/${e.book}` },
+        el("span", { class: "resume-label" }, "続きから読む"),
+        el("span", { class: "resume-book" }, `第${e.book}歌${pg}`),
+        el("span", { class: "resume-head" }, e.heading)
+      ));
+    }
+  }
 
   root.appendChild(el("div", { class: "section-title" }, "和訳 — 全24歌(縦書き)"));
   const grid = el("div", { class: "book-grid" });
@@ -365,38 +455,159 @@ function renderHome() {
 async function renderWayakuView(book) {
   const entry = state.manifest.wayaku.find((e) => e.book === book);
   if (!entry) return setError("その歌は見つかりませんでした。");
+  pager = null;
+  setReadingMode(true);
   document.getElementById("backBtn").hidden = false;
   setBusy(`第${book}歌 を読み込み中…`);
-  try {
-    const md = await fetchText(entry.file);
-    const article = renderWayaku(md, entry);
-    app().innerHTML = "";
-    app().appendChild(article);
 
-    // chapter nav
-    const list = state.manifest.wayaku;
-    const idx = list.findIndex((e) => e.book === book);
-    const prev = list[idx - 1], next = list[idx + 1];
-    const nav = el("div", { class: "chapter-nav" },
-      prev ? el("a", { href: `#/wayaku/${prev.book}` }, `← 第${prev.book}歌`) : el("span", {}, ""),
-      el("div", { class: "mid" }, `第${book}歌 ・ ${entry.heading.split(" — ")[0]}`),
-      next ? el("a", { href: `#/wayaku/${next.book}` }, `第${next.book}歌 →`) : el("span", {}, "")
-    );
-    extra().innerHTML = "";
-    extra().appendChild(nav);
+  let md;
+  try { md = await fetchText(entry.file); }
+  catch (e) { setReadingMode(false); return setError("読み込みに失敗しました: " + e.message); }
 
-    // 縦書き(vertical-rl)は本文の先頭が右端。Chromium では scrollLeft=0 が先頭。
-    article.scrollLeft = 0;
-    setupWheelScroll(article);
-    document.title = `第${book}歌 — ${state.manifest.title}`;
-  } catch (e) {
-    setError("読み込みに失敗しました: " + e.message);
+  const article = renderWayaku(md, entry);
+  app().innerHTML = "";
+  app().appendChild(article);
+
+  const list = state.manifest.wayaku;
+  const idx = list.findIndex((e) => e.book === book);
+  const prev = list[idx - 1], next = list[idx + 1];
+
+  // ---- フッター: ページ送り(縦書きは左が「次」)----
+  const btnNextCh = next
+    ? el("a", { class: "ch-link", href: `#/wayaku/${next.book}` }, "◀ 次の歌")
+    : el("span", { class: "ch-link disabled" }, "　");
+  const btnPrevCh = prev
+    ? el("a", { class: "ch-link", href: `#/wayaku/${prev.book}` }, "前の歌 ▶")
+    : el("span", { class: "ch-link disabled" }, "　");
+  const btnFwd = el("button", { class: "pg-btn", type: "button", "aria-label": "次のページ" }, "◀");
+  const btnBack = el("button", { class: "pg-btn", type: "button", "aria-label": "前のページ" }, "▶");
+  const pgTitle = el("div", { class: "pg-title" }, `第${book}歌 ${entry.heading.split(" — ")[0]}`);
+  const pgCount = el("div", { class: "pg-count" }, "");
+  const nav = el("div", { class: "page-nav" },
+    btnNextCh,
+    btnFwd,
+    el("div", { class: "pg-center" }, pgTitle, pgCount),
+    btnBack,
+    btnPrevCh
+  );
+  extra().innerHTML = "";
+  extra().appendChild(nav);
+  document.title = `第${book}歌 — ${state.manifest.title}`;
+
+  // ---- 初期ページ(章送り指定 > 保存位置 > 先頭)----
+  let initialPage = 0;
+  if (pendingStart && pendingStart.book === book) { initialPage = pendingStart.page; pendingStart = null; }
+  else {
+    const saved = await idbGet("wayaku/" + book);
+    if (saved && typeof saved.page === "number") initialPage = saved.page;
   }
+  // フォント確定後にレイアウトを測る(縦書きの行送り=段の幅)
+  try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (e) {}
+
+  let cur = 0;
+  let geo = { step: 1, maxScroll: 0, total: 1 };
+  // リーダーを「段数ぴったりの幅」に固定して中央寄せする。1ページ=その幅ぶんを
+  // 送るので、段(縦の行)が途中で切れない。
+  function layout() {
+    const cs = getComputedStyle(article);
+    const lh = parseFloat(cs.lineHeight) || 34;               // 縦書きでは行送り=1段の幅(px)
+    const avail = (article.parentElement || article).clientWidth || window.innerWidth;
+    const margin = avail < 480 ? 12 : 40;
+    const cols = Math.max(1, Math.floor((avail - margin * 2) / lh));
+    const bandW = cols * lh;
+    article.style.width = bandW + "px";                       // 段の整数倍の幅に固定
+    const step = article.clientWidth;                         // = bandW(左右パディング0)
+    const maxScroll = Math.max(0, article.scrollWidth - article.clientWidth);
+    const total = Math.max(1, Math.ceil(article.scrollWidth / step));
+    geo = { step, maxScroll, total };
+    return geo;
+  }
+  function applyScroll(smooth) {
+    const left = Math.max(-geo.maxScroll, -(cur * geo.step));  // vertical-rl は先頭が 0、左へ進むと負
+    article.scrollTo({ left, behavior: smooth ? "smooth" : "auto" });
+  }
+  function updateUI() {
+    pgCount.textContent = `${cur + 1} / ${geo.total}`;
+    btnFwd.classList.toggle("edge", cur >= geo.total - 1 && !next);
+    btnBack.classList.toggle("edge", cur <= 0 && !prev);
+  }
+  function go(delta) {
+    const target = cur + delta;
+    if (target < 0) {            // 先頭より前 → 前の歌の末尾へ
+      if (prev) { pendingStart = { book: prev.book, page: 1e9 }; location.hash = `#/wayaku/${prev.book}`; }
+      return;
+    }
+    if (target > geo.total - 1) { // 末尾より先 → 次の歌の先頭へ
+      if (next) { pendingStart = { book: next.book, page: 0 }; location.hash = `#/wayaku/${next.book}`; }
+      return;
+    }
+    cur = target;
+    applyScroll(true);
+    updateUI();
+    saveProgress(book, cur, geo.total, entry.heading);
+  }
+  function relayout() {
+    layout();
+    cur = clamp(cur, 0, geo.total - 1);
+    applyScroll(false);
+    updateUI();
+  }
+
+  // 初期位置へ
+  layout();
+  cur = clamp(initialPage, 0, geo.total - 1);
+  applyScroll(false);
+  updateUI();
+  saveProgress(book, cur, geo.total, entry.heading);
+
+  // ---- 操作: ボタン ----
+  btnFwd.addEventListener("click", () => go(+1));
+  btnBack.addEventListener("click", () => go(-1));
+
+  // ---- 操作: ホイール(縦回転→ページ送り、連射を抑制)----
+  let wheelLock = 0;
+  article.addEventListener("wheel", (ev) => {
+    const d = Math.abs(ev.deltaY) > Math.abs(ev.deltaX) ? ev.deltaY : ev.deltaX;
+    ev.preventDefault();
+    const now = Date.now();
+    if (now < wheelLock || Math.abs(d) < 6) return;
+    wheelLock = now + 240;
+    go(d > 0 ? +1 : -1);
+  }, { passive: false });
+
+  // ---- 操作: スワイプ / 端タップ ----
+  let tsx = 0, tsy = 0, moved = false;
+  article.addEventListener("touchstart", (ev) => {
+    const t = ev.touches[0]; tsx = t.clientX; tsy = t.clientY; moved = false;
+  }, { passive: true });
+  article.addEventListener("touchmove", (ev) => {
+    const t = ev.touches[0];
+    if (Math.abs(t.clientX - tsx) > 10 || Math.abs(t.clientY - tsy) > 10) moved = true;
+  }, { passive: true });
+  article.addEventListener("touchend", (ev) => {
+    const t = ev.changedTouches[0];
+    const dx = t.clientX - tsx, dy = t.clientY - tsy;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) go(dx < 0 ? +1 : -1); // 左スワイプ=次へ
+  }, { passive: true });
+  article.addEventListener("click", (ev) => {
+    if (moved) { moved = false; return; }
+    if (ev.target.closest("a")) return;                       // リンクは通常遷移
+    const sel = window.getSelection && window.getSelection().toString();
+    if (sel && sel.length > 0) return;                        // 文字選択中は無視
+    const r = article.getBoundingClientRect();
+    const x = ev.clientX - r.left;
+    if (x < r.width * 0.32) go(+1);                           // 左端タップ=次へ(左へ進む)
+    else if (x > r.width * 0.68) go(-1);                      // 右端タップ=戻る
+  });
+
+  pager = { go, relayout };
 }
 
 async function renderJitenView(slug) {
   const entry = state.manifest.jiten.find((j) => j.slug === slug);
   if (!entry) return setError("その索引は見つかりませんでした。");
+  pager = null;
+  setReadingMode(false);
   document.getElementById("backBtn").hidden = false;
   setBusy(`${entry.label} を読み込み中…`);
   try {
@@ -412,18 +623,6 @@ async function renderJitenView(slug) {
   }
 }
 
-/* 縦書きでは縦ホイールを横スクロールへ変換 */
-function setupWheelScroll(node) {
-  node.addEventListener("wheel", (ev) => {
-    if (Math.abs(ev.deltaY) > Math.abs(ev.deltaX)) {
-      // vertical-rl: the start is scrollLeft 0 and reading forward (leftward)
-      // moves scrollLeft negative, so wheel-down subtracts.
-      node.scrollLeft -= ev.deltaY;
-      ev.preventDefault();
-    }
-  }, { passive: false });
-}
-
 /* ---------------------------------------------------------------------
    Router
    --------------------------------------------------------------------- */
@@ -436,19 +635,31 @@ function route() {
   return renderHome();
 }
 
-/* keyboard: 縦書きページで ← → により移動 */
+/* キーボード: 縦書きリーダーのページ送り(← が「次」)*/
 document.addEventListener("keydown", (ev) => {
-  const reader = document.querySelector(".reader-vertical");
-  if (!reader) return;
-  // ArrowLeft = read forward (leftward, scrollLeft more negative)
-  if (ev.key === "ArrowLeft" || ev.key === "PageDown" || ev.key === " ") { reader.scrollLeft -= 240; ev.preventDefault(); }
-  if (ev.key === "ArrowRight" || ev.key === "PageUp") { reader.scrollLeft += 240; ev.preventDefault(); }
+  if (!pager) return;
+  if (ev.key === "ArrowLeft" || ev.key === "ArrowDown" || ev.key === "PageDown" || ev.key === " ") {
+    pager.go(+1); ev.preventDefault();
+  } else if (ev.key === "ArrowRight" || ev.key === "ArrowUp" || ev.key === "PageUp") {
+    pager.go(-1); ev.preventDefault();
+  }
+});
+
+/* 画面リサイズ・回転で段組みを組み直す */
+let _resizeTimer = 0;
+window.addEventListener("resize", () => {
+  if (!pager) return;
+  clearTimeout(_resizeTimer);
+  _resizeTimer = setTimeout(() => { if (pager) pager.relayout(); }, 180);
 });
 
 async function main() {
   document.getElementById("backBtn").addEventListener("click", () => {
     if (location.hash && location.hash !== "#/") location.hash = "#/";
   });
+  document.getElementById("fontDec").addEventListener("click", () => changeFont(-1));
+  document.getElementById("fontInc").addEventListener("click", () => changeFont(+1));
+  applyFont();
   setBusy("目次を読み込み中…");
   try {
     const res = await fetch(BASE + "manifest.json", { cache: "no-cache" });

@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>オデュッセイア — 縦書きビュワー</title>
   <meta name="description" content="ホメロス『オデュッセイア』(Samuel Butler 英訳からの現代日本語訳)を、読みやすい縦書きで読むビュワー。全24歌の和訳と、人物・地名の索引。" />
+  <meta name="theme-color" content="#f5f1e6" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#1c1915" media="(prefers-color-scheme: dark)" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%238a5a2b'/%3E%3Ctext x='16' y='23' font-size='20' text-anchor='middle' fill='%23f5f1e6' font-family='serif'%3E縦%3C/text%3E%3C/svg%3E" />
   <link rel="stylesheet" href="viewer/viewer.css" />
 </head>
@@ -12,6 +16,8 @@
   <header class="app-header">
     <a class="home-link" href="#/">オデュッセイア<small>縦書きビュワー</small></a>
     <div class="spacer"></div>
+    <button id="fontDec" class="tool-btn icon" title="文字を小さく" aria-label="文字を小さく" hidden>A−</button>
+    <button id="fontInc" class="tool-btn icon" title="文字を大きく" aria-label="文字を大きく" hidden>A＋</button>
     <button id="backBtn" class="tool-btn" hidden>目次へ</button>
   </header>
 
