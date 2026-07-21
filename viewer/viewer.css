@@ -223,7 +223,7 @@ a:hover { text-decoration: underline; }
   clip-path: inset(0);
   direction: ltr;
   text-align: justify;
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
   touch-action: pan-y;
   -webkit-tap-highlight-color: transparent;
 }

@@ -518,92 +518,101 @@ async function renderWayakuView(book) {
   // フォント確定後にレイアウトを測る(縦書きの行送り=段の幅)
   try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (e) {}
 
-  let cur = 0;                 // 現在ページ番号
-  let starts = [0];            // 各ページ先頭(本文先頭からの距離px)
-  let geo = { total: 1, maxD: 0, cw: 1 };
+  let cur = 0;                                  // 現在ページ番号(表示・保存用)
+  let geo = { cw: 1, lh: 34, maxScroll: 0, total: 1 };
 
-  // リーダー幅を段の整数倍に固定して中央寄せ。さらに、実際に描画された段
-  // (縦の行)の境界を測り、ページの区切りを必ず段の境目に合わせる。これで
-  // 見出しやコールアウト(余白が段幅の整数倍でない)が混ざっても段が切れない。
-  function computeLayout() {
-    const cs = getComputedStyle(article);
-    const lh = parseFloat(cs.lineHeight) || 34;
+  // リーダー幅を段(縦の行)の整数倍に固定して中央寄せ。
+  // 行送りを整数pxに固定するのが要点:端末のピクセル丸めで段位置が少しずつ
+  // ずれて深いページで累積するのを防ぐ。
+  function computeGeo() {
+    article.style.lineHeight = "";                            // 現フォントの自然な行送りを読む
+    const raw = parseFloat(getComputedStyle(article).lineHeight) || 34;
+    const lh = Math.max(1, Math.round(raw));                  // 整数pxに固定
+    article.style.lineHeight = lh + "px";
     const avail = (article.parentElement || article).clientWidth || window.innerWidth;
     const margin = avail < 480 ? 12 : 40;
     const cols = Math.max(1, Math.floor((avail - margin * 2) / lh));
-    article.style.width = cols * lh + "px";                   // 段の整数倍の幅に固定
+    article.style.width = cols * lh + "px";
+    // 見出しは字が大きく段幅が本文と違うため、以降の段グリッドがずれる。
+    // 見出しの行送りを基準段幅(lh)の整数倍に丸め、グリッドを保つ。
+    const heads = article.querySelectorAll("h1, h2");
+    for (let i = 0; i < heads.length; i++) {
+      const h = heads[i];
+      h.style.lineHeight = "";
+      const nat = parseFloat(getComputedStyle(h).lineHeight) || lh;
+      h.style.lineHeight = Math.max(1, Math.round(nat / lh)) * lh + "px";
+    }
     const cw = article.clientWidth;
+    const maxScroll = Math.max(0, article.scrollWidth - cw);
+    const total = Math.max(1, Math.round(maxScroll / cw) + 1);
+    geo = { cw, lh, maxScroll, total };
+  }
 
-    // 描画済みの各段の右端(=段の境界)を本文先頭からの距離として集める
+  // いまの表示位置で、本文の段グリッドを画面右端へぴったり合わせる。
+  // 段の位相(右端からの距離を行送りで割った余り)の最頻値=本文の主グリッドを
+  // 採用し、見出し・コールアウト・縦中横など少数派のズレに惑わされないようにする。
+  function alignHere() {
     const aRect = article.getBoundingClientRect();
-    const sc = article.scrollLeft;                            // ≤ 0
+    const lh = geo.lh;
+    const minH = article.clientHeight * 0.5;                  // 段らしい高い矩形だけ
     const range = document.createRange();
     range.selectNodeContents(article);
-    const set = new Set([0]);
     const rects = range.getClientRects();
+    const buckets = new Map();
+    let bestKey = 0, bestCount = -1;
     for (let i = 0; i < rects.length; i++) {
       const r = rects[i];
-      if (r.width < 1 || r.height < 1) continue;
-      const d = Math.round(aRect.right - r.right - sc);       // 本文先頭(右端)からの距離
-      if (d >= 0) set.add(d);
+      if (r.height < minH) continue;
+      let ph = (aRect.right - r.right) % lh;
+      ph = ((ph % lh) + lh) % lh;                             // [0, lh)
+      const key = Math.round(ph) % lh;
+      const c = (buckets.get(key) || 0) + 1;
+      buckets.set(key, c);
+      if (c > bestCount) { bestCount = c; bestKey = key; }
     }
-    const B = Array.from(set).sort((a, b) => a - b);
-
-    // 段の境界に合わせて貪欲にページを区切る(各ページは段を割らない)
-    const maxD = Math.max(0, article.scrollWidth - cw);
-    const st = [0];
-    let d = 0, guard = 0;
-    while (d < maxD - 1 && guard++ < 10000) {
-      const limit = d + cw;
-      // limit 以下で最大、かつ d より大きい境界を二分探索
-      let lo = 0, hi = B.length - 1, best = -1;
-      while (lo <= hi) { const mid = (lo + hi) >> 1; if (B[mid] <= limit + 0.5) { best = mid; lo = mid + 1; } else hi = mid - 1; }
-      let nb = best >= 0 ? B[best] : limit;
-      if (nb <= d) nb = Math.min(maxD, d + cw);               // 段が幅より広い等の保険
-      if (nb <= d) break;
-      st.push(nb);
-      d = nb;
+    if (bestCount <= 0) return;
+    let target = bestKey;
+    if (target > lh / 2) target -= lh;                        // 0 にいちばん近い段境界へ [-lh/2, lh/2]
+    if (Math.abs(target) > 0.5 && Math.abs(target) <= lh) {
+      article.scrollLeft = Math.min(0, Math.max(-geo.maxScroll, article.scrollLeft + target));
     }
-    starts = st;
-    geo = { total: st.length, maxD, cw };
-    return geo;
   }
-  function applyScroll(smooth) {
-    const d = starts[clamp(cur, 0, starts.length - 1)] || 0;
-    article.scrollTo({ left: -Math.min(d, geo.maxD), behavior: smooth ? "smooth" : "auto" });
+
+  function gotoScroll(target) {
+    target = Math.min(0, Math.max(-geo.maxScroll, target));
+    article.scrollLeft = target;  // 同期で反映(直後に段合わせを実測するため)
+    alignHere();
+    cur = clamp(geo.cw > 0 ? Math.round(-article.scrollLeft / geo.cw) : 0, 0, geo.total - 1);
   }
   function updateUI() {
     pgCount.textContent = `${cur + 1} / ${geo.total}`;
-    btnFwd.classList.toggle("edge", cur >= geo.total - 1 && !next);
-    btnBack.classList.toggle("edge", cur <= 0 && !prev);
+    btnFwd.classList.toggle("edge", article.scrollLeft <= -geo.maxScroll + 1 && !next);
+    btnBack.classList.toggle("edge", article.scrollLeft >= -1 && !prev);
   }
   function go(delta) {
-    const target = cur + delta;
-    if (target < 0) {            // 先頭より前 → 前の歌の末尾へ
-      if (prev) { pendingStart = { book: prev.book, page: 1e9 }; location.hash = `#/wayaku/${prev.book}`; }
-      return;
-    }
-    if (target > geo.total - 1) { // 末尾より先 → 次の歌の先頭へ
+    if (delta > 0 && article.scrollLeft <= -geo.maxScroll + 1) { // 末尾 → 次の歌
       if (next) { pendingStart = { book: next.book, page: 0 }; location.hash = `#/wayaku/${next.book}`; }
       return;
     }
-    cur = target;
-    applyScroll(true);
+    if (delta < 0 && article.scrollLeft >= -1) {                 // 先頭 → 前の歌の末尾
+      if (prev) { pendingStart = { book: prev.book, page: 1e9 }; location.hash = `#/wayaku/${prev.book}`; }
+      return;
+    }
+    gotoScroll(article.scrollLeft - delta * geo.cw);            // 進む=より負へ
     updateUI();
     saveProgress(book, cur, geo.total, entry.heading);
   }
   function relayout() {
     syncChrome();
-    computeLayout();
-    cur = clamp(cur, 0, geo.total - 1);
-    applyScroll(false);
+    const frac = geo.maxScroll > 0 ? (-article.scrollLeft / geo.maxScroll) : 0;
+    computeGeo();
+    gotoScroll(-(frac * geo.maxScroll));
     updateUI();
   }
 
   // 初期位置へ
-  computeLayout();
-  cur = clamp(initialPage, 0, geo.total - 1);
-  applyScroll(false);
+  computeGeo();
+  gotoScroll(-(clamp(initialPage, 0, geo.total - 1) * geo.cw));
   updateUI();
   saveProgress(book, cur, geo.total, entry.heading);
 
