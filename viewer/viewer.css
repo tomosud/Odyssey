@@ -346,6 +346,23 @@ a:hover { text-decoration: underline; }
   color: var(--ink);
   -webkit-overflow-scrolling: touch;
 }
+.fn-body .fn-ja { margin: 0 0 0.7rem; }
+.fn-body .fn-en {
+  margin: 0;
+  padding-top: 0.6rem;
+  border-top: 1px dashed var(--line);
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+.fn-body .fn-en::before {
+  content: "原文(Butler)";
+  display: block;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: var(--accent-soft);
+  margin-bottom: 0.25rem;
+}
 
 /* Obsidian callouts, rendered vertically */
 .callout {

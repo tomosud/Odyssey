@@ -365,26 +365,14 @@ function saveProgress(book, page, total, heading) {
 /* ---------------------------------------------------------------------
    脚注(Butler原文)— タップで内容を一時表示
    --------------------------------------------------------------------- */
-const FOOTNOTES_FILE = "Odyssey/01_原文/99_脚注(Footnotes).md";
+const FOOTNOTES_JSON = BASE + "footnotes.json";     // {n: {ja, en}}
 let _fnMap = null, _fnPromise = null;
-function parseFootnotes(md) {
-  const map = {};
-  const body = md.replace(/^---[\s\S]*?---\s*/, "");   // frontmatter 除去
-  const blocks = body.split(/\n\s*\n/);                // 空行で分割(1脚注=1ブロック)
-  for (const blk of blocks) {
-    const m = blk.match(/^\s*\[(\d+)\]\s*([\s\S]*)$/);
-    if (!m) continue;
-    let text = m[2].trim().replace(/\s+/g, " ");
-    text = text.replace(/^\[\s*/, "").replace(/\s*\]$/, ""); // 外側の [ ] を除去
-    map[m[1]] = text;
-  }
-  return map;
-}
 function loadFootnotes() {
   if (_fnMap) return Promise.resolve(_fnMap);
   if (_fnPromise) return _fnPromise;
-  _fnPromise = fetchText(FOOTNOTES_FILE)
-    .then((md) => { _fnMap = parseFootnotes(md); return _fnMap; })
+  _fnPromise = fetch(FOOTNOTES_JSON + "?v=" + V, { cache: "no-cache" })
+    .then((r) => (r.ok ? r.json() : {}))
+    .then((j) => { _fnMap = j; return j; })
     .catch(() => ({}));
   return _fnPromise;
 }
@@ -421,7 +409,14 @@ async function showFootnote(num) {
   const map = await loadFootnotes();
   // 表示中に別の脚注へ切り替わっていないかを確認
   if (ov.hidden || ov.querySelector(".fn-num").textContent !== `脚注 [${num}]`) return;
-  bodyEl.textContent = (map && map[num]) ? map[num] : "(この脚注は原文に見つかりませんでした)";
+  const e = map && map[num];
+  bodyEl.innerHTML = "";
+  if (e && (e.ja || e.en)) {
+    if (e.ja) bodyEl.appendChild(el("p", { class: "fn-ja" }, e.ja));
+    if (e.en) bodyEl.appendChild(el("p", { class: "fn-en" }, e.en));
+  } else {
+    bodyEl.textContent = "(この脚注は見つかりませんでした)";
+  }
 }
 
 /* ---------------------------------------------------------------------
