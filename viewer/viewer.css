@@ -16,6 +16,8 @@
   --sans: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP",
     "Noto Sans CJK JP", "Meiryo", system-ui, sans-serif;
   --reading-size: 1.06rem;
+  --header-h: 52px;
+  --footer-h: 60px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -45,6 +47,8 @@ html, body {
   font-family: var(--sans);
   -webkit-text-size-adjust: 100%;
 }
+/* 読書中(縦書きリーダー)はページ全体のスクロールを止め、段組みを固定表示 */
+body.reading { overflow: hidden; overscroll-behavior: none; }
 
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
@@ -205,17 +209,23 @@ a:hover { text-decoration: underline; }
   font-size: var(--reading-size);
   line-height: 1.95;
   letter-spacing: 0.04em;
-  height: calc(100vh - 52px);
-  /* width must be constrained to the viewport so the vertical text scrolls
+  /* ヘッダーとフッター(ページ送り)を除いた高さにぴったり収め、段組みで見せる */
+  height: calc(100vh - var(--header-h) - var(--footer-h));
+  height: calc(100dvh - var(--header-h) - var(--footer-h));
+  /* width must be constrained to the viewport so the vertical text is paged
      inside this box instead of expanding the whole page. */
-  width: 100%;
+  /* 幅は JS が「段数ぴったり」に設定して中央寄せする(段を割らないため) */
   max-width: 100%;
-  padding: 2.4rem 2.6rem 2.4rem 2.6rem;
-  overflow-x: auto;
-  overflow-y: hidden;
+  margin: 0 auto;
+  padding: 2.2rem 0;
+  overflow: hidden;
+  /* vertical-rl では overflow:hidden がガター側にはみ出すことがあるため確実にクリップ */
+  clip-path: inset(0);
   direction: ltr;
   text-align: justify;
   scroll-behavior: smooth;
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
 }
 /* keep the block flow natural; children stack right-to-left */
 .reader-vertical > * { break-inside: avoid; }
@@ -301,25 +311,60 @@ a:hover { text-decoration: underline; }
   color: var(--ink-soft);
 }
 
-/* ---------- footer nav for chapters ---------- */
-.chapter-nav {
+/* ---------- footer: ページ送り ---------- */
+.page-nav {
   position: fixed;
   bottom: 0; left: 0; right: 0;
+  height: calc(var(--footer-h) + env(safe-area-inset-bottom, 0px));
+  padding: 0 0.6rem env(safe-area-inset-bottom, 0px);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  gap: 0.4rem;
+  background: color-mix(in srgb, var(--panel) 94%, transparent);
   backdrop-filter: blur(8px);
   border-top: 1px solid var(--line);
-  font-size: 0.85rem;
   z-index: 15;
 }
-.chapter-nav a, .chapter-nav span { color: var(--ink-soft); }
-.chapter-nav a.active { color: var(--accent); font-weight: 600; }
-.chapter-nav .mid { font-family: var(--serif); color: var(--ink); text-align: center; flex: 1; }
-.chapter-nav .scroll-hint { font-size: 0.72rem; opacity: 0.7; }
+.page-nav .pg-center {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: center;
+}
+.pg-title {
+  font-family: var(--serif);
+  font-size: 0.9rem;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pg-count { font-size: 0.72rem; color: var(--ink-soft); letter-spacing: 0.1em; margin-top: 1px; }
+.pg-btn {
+  flex: 0 0 auto;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--accent);
+  font-size: 1.05rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.12s, border-color 0.12s, opacity 0.12s, transform 0.06s;
+  -webkit-tap-highlight-color: transparent;
+}
+.pg-btn:hover { border-color: var(--accent-soft); background: color-mix(in srgb, var(--accent-soft) 20%, var(--panel)); }
+.pg-btn:active { transform: scale(0.93); }
+.pg-btn.edge { opacity: 0.3; }
+.ch-link {
+  flex: 0 0 auto;
+  font-size: 0.74rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  padding: 0.4rem 0.3rem;
+}
+.ch-link:hover { color: var(--accent); text-decoration: none; }
+.ch-link.disabled { visibility: hidden; }
 
 /* ============================================================
    事典 (横書きの検索できる索引)
@@ -398,7 +443,39 @@ a:hover { text-decoration: underline; }
 .jiten-view .callout .callout-title, .jiten-view .callout p { margin: 0; }
 mark { background: var(--accent-soft); color: var(--ink); border-radius: 3px; padding: 0 1px; }
 
+/* ---------- 目次: 続きから読む ---------- */
+.resume-card {
+  display: block;
+  max-width: 560px;
+  margin: 0 auto 1.8rem;
+  padding: 1rem 1.2rem;
+  border: 1px solid var(--accent-soft);
+  border-radius: 14px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent-soft) 24%, var(--panel)), var(--panel));
+  box-shadow: 0 2px 10px var(--shadow);
+  color: var(--ink);
+  transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s;
+}
+.resume-card:hover { transform: translateY(-2px); border-color: var(--accent); box-shadow: 0 6px 16px var(--shadow); text-decoration: none; }
+.resume-label {
+  display: inline-block;
+  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent-soft) 34%, transparent);
+  padding: 0.12rem 0.55rem; border-radius: 999px;
+}
+.resume-book { display: block; font-family: var(--serif); font-size: 1.15rem; margin-top: 0.5rem; }
+.resume-head { display: block; font-size: 0.85rem; color: var(--ink-soft); margin-top: 0.25rem; line-height: 1.55; }
+
+/* header の文字サイズボタン */
+.tool-btn.icon { min-width: 40px; padding: 0.3rem 0.5rem; font-weight: 600; }
+
 @media (max-width: 640px) {
-  .reader-vertical { padding: 1.6rem 1.4rem; height: calc(100vh - 100px); }
+  .reader-vertical { padding: 1.4rem 0; }
   .jiten-view thead th { top: 118px; }
+}
+/* スマホはページ送りを主役に、章送りリンクは省いてフッターを広く使う */
+@media (max-width: 520px) {
+  .ch-link { display: none; }
+  .pg-btn { width: 46px; height: 46px; }
 }
