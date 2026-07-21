@@ -1,0 +1,404 @@
+/* オデュッセイア 縦書きビュワー */
+:root {
+  --bg: #f5f1e6;
+  --panel: #fbf8ef;
+  --ink: #2b2420;
+  --ink-soft: #6a5f52;
+  --accent: #8a5a2b;
+  --accent-soft: #c9a878;
+  --line: #e3d9c4;
+  --shadow: rgba(60, 45, 20, 0.12);
+  --callout-info: #7b6a4d;
+  --callout-note: #4a6b7b;
+  --callout-tip: #6b7b4a;
+  --serif: "Hiragino Mincho ProN", "Hiragino Mincho Pro", "Yu Mincho",
+    "YuMincho", "Noto Serif JP", "Noto Serif CJK JP", "MS PMincho", serif;
+  --sans: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP",
+    "Noto Sans CJK JP", "Meiryo", system-ui, sans-serif;
+  --reading-size: 1.06rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1915;
+    --panel: #241f1a;
+    --ink: #ece3d3;
+    --ink-soft: #a99d89;
+    --accent: #d9a86a;
+    --accent-soft: #8a6b42;
+    --line: #3a332a;
+    --shadow: rgba(0, 0, 0, 0.4);
+    --callout-info: #b8a37e;
+    --callout-note: #86aab8;
+    --callout-tip: #a3b881;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-text-size-adjust: 100%;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ---------- Header ---------- */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 1rem;
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+.app-header .home-link {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.app-header .home-link small {
+  display: block;
+  font-size: 0.62rem;
+  color: var(--ink-soft);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+.spacer { flex: 1; }
+
+.tool-btn {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  border-radius: 8px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-family: var(--sans);
+  line-height: 1;
+  transition: border-color 0.15s, color 0.15s;
+}
+.tool-btn:hover { border-color: var(--accent-soft); color: var(--accent); }
+.tool-btn[hidden] { display: none; }
+
+/* ---------- Home ---------- */
+.home {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2.2rem 1.25rem 4rem;
+}
+.home .hero {
+  text-align: center;
+  margin-bottom: 2.4rem;
+}
+.home .hero h1 {
+  font-family: var(--serif);
+  font-size: clamp(2rem, 6vw, 3rem);
+  margin: 0 0 0.4rem;
+  letter-spacing: 0.14em;
+}
+.home .hero p {
+  color: var(--ink-soft);
+  margin: 0.2rem 0;
+  font-size: 0.95rem;
+}
+.section-title {
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  margin: 2rem 0 0.9rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--line);
+  color: var(--accent);
+  letter-spacing: 0.08em;
+}
+
+.book-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 0.7rem;
+}
+.book-card {
+  display: block;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.85rem 0.95rem;
+  box-shadow: 0 1px 2px var(--shadow);
+  transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s;
+  color: var(--ink);
+}
+.book-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-soft);
+  box-shadow: 0 4px 12px var(--shadow);
+  text-decoration: none;
+}
+.book-card .num {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+.book-card .num b {
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  color: var(--accent);
+}
+.book-card .num span {
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+  letter-spacing: 0.1em;
+}
+.book-card .heading {
+  font-family: var(--serif);
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+.jiten-row { display: flex; flex-wrap: wrap; gap: 0.7rem; }
+.jiten-card {
+  flex: 1 1 200px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  color: var(--ink);
+  box-shadow: 0 1px 2px var(--shadow);
+  transition: border-color 0.12s, transform 0.12s;
+}
+.jiten-card:hover { border-color: var(--accent-soft); transform: translateY(-2px); text-decoration: none; }
+.jiten-card b { font-family: var(--serif); font-size: 1.05rem; }
+.jiten-card span { display: block; font-size: 0.75rem; color: var(--ink-soft); margin-top: 0.2rem; }
+
+/* ---------- Loading / error ---------- */
+.status-msg {
+  max-width: 700px;
+  margin: 4rem auto;
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  padding: 0 1rem;
+}
+.status-msg.error { color: #b5482f; }
+
+/* ============================================================
+   縦書き 和訳リーダー
+   ============================================================ */
+.reader-vertical {
+  writing-mode: vertical-rl;
+  -webkit-writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-family: var(--serif);
+  font-size: var(--reading-size);
+  line-height: 1.95;
+  letter-spacing: 0.04em;
+  height: calc(100vh - 52px);
+  /* width must be constrained to the viewport so the vertical text scrolls
+     inside this box instead of expanding the whole page. */
+  width: 100%;
+  max-width: 100%;
+  padding: 2.4rem 2.6rem 2.4rem 2.6rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  direction: ltr;
+  text-align: justify;
+  scroll-behavior: smooth;
+}
+/* keep the block flow natural; children stack right-to-left */
+.reader-vertical > * { break-inside: avoid; }
+
+.reader-vertical h1 {
+  font-size: 1.7em;
+  font-weight: 600;
+  margin: 0 0 0 1.4rem;
+  letter-spacing: 0.18em;
+  line-height: 1.4;
+  padding-left: 0.4rem;
+  border-left: none;
+}
+.reader-vertical .book-label {
+  color: var(--accent);
+  font-size: 0.95em;
+  letter-spacing: 0.24em;
+  margin: 0 0 0 0.6rem;
+}
+.reader-vertical h2 {
+  font-size: 1.15em;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 0 0 0 1rem;
+  padding-right: 0.3rem;
+  border-right: 3px solid var(--accent-soft);
+}
+.reader-vertical p {
+  margin: 0;
+  text-indent: 1em;
+}
+.reader-vertical hr {
+  border: none;
+  width: 1px;
+  height: 55%;
+  margin: 0 1.2rem;
+  background: linear-gradient(to bottom, transparent, var(--accent-soft), transparent);
+}
+
+/* tate-chu-yoko: 半角数字を正立で組む */
+.tcy {
+  text-combine-upright: all;
+  -webkit-text-combine: horizontal;
+  font-family: var(--sans);
+}
+.fnote {
+  font-size: 0.7em;
+  color: var(--accent);
+  font-family: var(--sans);
+  vertical-align: 0;
+}
+
+/* Obsidian callouts, rendered vertically */
+.callout {
+  border-right: 4px solid var(--callout-info);
+  background: color-mix(in srgb, var(--panel) 88%, var(--bg));
+  padding: 1rem 0.9rem;
+  margin: 0 1rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px var(--shadow);
+  max-height: 100%;
+}
+.callout.callout-note { border-right-color: var(--callout-note); }
+.callout.callout-tip { border-right-color: var(--callout-tip); }
+.callout .callout-title {
+  font-weight: 700;
+  font-family: var(--sans);
+  font-size: 0.9em;
+  letter-spacing: 0.1em;
+  margin: 0 0 0 0.6rem;
+  color: var(--callout-info);
+}
+.callout.callout-note .callout-title { color: var(--callout-note); }
+.callout.callout-tip .callout-title { color: var(--callout-tip); }
+.callout p { text-indent: 0; margin: 0 0.6rem 0 0; font-size: 0.92em; }
+.callout ul { margin: 0; padding: 0 1.2em 0 0; }
+.callout li { margin: 0 0.4rem 0 0; font-size: 0.92em; }
+
+.reader-vertical blockquote {
+  margin: 0 1rem;
+  padding-right: 0.8rem;
+  border-right: 3px solid var(--accent-soft);
+  color: var(--ink-soft);
+}
+
+/* ---------- footer nav for chapters ---------- */
+.chapter-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid var(--line);
+  font-size: 0.85rem;
+  z-index: 15;
+}
+.chapter-nav a, .chapter-nav span { color: var(--ink-soft); }
+.chapter-nav a.active { color: var(--accent); font-weight: 600; }
+.chapter-nav .mid { font-family: var(--serif); color: var(--ink); text-align: center; flex: 1; }
+.chapter-nav .scroll-hint { font-size: 0.72rem; opacity: 0.7; }
+
+/* ============================================================
+   事典 (横書きの検索できる索引)
+   ============================================================ */
+.jiten-view {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 1.6rem 1.25rem 4rem;
+}
+.jiten-view h1 {
+  font-family: var(--serif);
+  font-size: 1.6rem;
+  letter-spacing: 0.1em;
+  margin: 0.4rem 0 0.2rem;
+}
+.jiten-search {
+  position: sticky;
+  top: 52px;
+  background: var(--bg);
+  padding: 0.8rem 0;
+  z-index: 10;
+}
+.jiten-search input {
+  width: 100%;
+  padding: 0.65rem 0.9rem;
+  font-size: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--ink);
+  font-family: var(--sans);
+}
+.jiten-search input:focus { outline: none; border-color: var(--accent-soft); }
+.jiten-count { font-size: 0.8rem; color: var(--ink-soft); margin: 0.3rem 0.2rem; }
+
+.jiten-view table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.jiten-view thead th {
+  position: sticky;
+  top: 120px;
+  background: var(--accent);
+  color: #fff;
+  text-align: right;
+  padding: 0.5rem 0.7rem;
+  font-weight: 600;
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+}
+.jiten-view tbody td {
+  padding: 0.55rem 0.7rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  line-height: 1.6;
+}
+.jiten-view tbody tr:hover { background: color-mix(in srgb, var(--panel) 60%, var(--bg)); }
+.jiten-view td.c-name { font-family: var(--serif); font-weight: 600; white-space: nowrap; }
+.jiten-view td.c-src { color: var(--ink-soft); font-size: 0.82rem; white-space: nowrap; }
+.jiten-view td.c-app { color: var(--accent); font-size: 0.82rem; white-space: nowrap; }
+.jiten-view h2 {
+  font-family: var(--serif);
+  color: var(--accent);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 0.3rem;
+  margin: 2rem 0 0.6rem;
+}
+.jiten-view .callout {
+  writing-mode: horizontal-tb;
+  border-right: none;
+  border-left: 4px solid var(--callout-info);
+  margin: 0 0 1rem;
+  max-height: none;
+}
+.jiten-view .callout .callout-title, .jiten-view .callout p { margin: 0; }
+mark { background: var(--accent-soft); color: var(--ink); border-radius: 3px; padding: 0 1px; }
+
+@media (max-width: 640px) {
+  .reader-vertical { padding: 1.6rem 1.4rem; height: calc(100vh - 100px); }
+  .jiten-view thead th { top: 118px; }
+}
