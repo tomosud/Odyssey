@@ -574,7 +574,8 @@ async function renderWayakuView(book) {
     let target = bestKey;
     if (target > lh / 2) target -= lh;                        // 0 にいちばん近い段境界へ [-lh/2, lh/2]
     if (Math.abs(target) > 0.5 && Math.abs(target) <= lh) {
-      article.scrollLeft = Math.min(0, Math.max(-geo.maxScroll, article.scrollLeft + target));
+      // scrollLeft を +δ すると位相は +δ 変化する。位相 target を 0 にするには -target。
+      article.scrollLeft = Math.min(0, Math.max(-geo.maxScroll, article.scrollLeft - target));
     }
   }
 
