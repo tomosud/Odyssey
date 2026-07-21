@@ -315,8 +315,9 @@ a:hover { text-decoration: underline; }
 .page-nav {
   position: fixed;
   bottom: 0; left: 0; right: 0;
-  height: calc(var(--footer-h) + env(safe-area-inset-bottom, 0px));
-  padding: 0 0.6rem env(safe-area-inset-bottom, 0px);
+  min-height: 56px;
+  /* 実際の高さは JS が測って --footer-h に反映する(ここでは参照しない) */
+  padding: 0.4rem 0.6rem calc(0.4rem + env(safe-area-inset-bottom, 0px));
   display: flex;
   align-items: center;
   gap: 0.4rem;
