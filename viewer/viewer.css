@@ -276,6 +276,75 @@ a:hover { text-decoration: underline; }
   color: var(--accent);
   font-family: var(--sans);
   vertical-align: 0;
+  cursor: pointer;
+  text-decoration: none;
+  padding: 2px;                     /* タップ領域を少し広げる */
+  border-radius: 4px;
+  -webkit-tap-highlight-color: transparent;
+}
+.fnote:hover, .fnote:focus { background: color-mix(in srgb, var(--accent-soft) 30%, transparent); outline: none; }
+
+/* ---------- 脚注ポップアップ ---------- */
+.fn-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+}
+.fn-overlay[hidden] { display: none; }
+.fn-sheet {
+  writing-mode: horizontal-tb;
+  width: 100%;
+  max-width: 640px;
+  max-height: 55vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-bottom: none;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.3);
+  padding: 0.6rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px));
+  animation: fnUp 0.16s ease-out;
+}
+@keyframes fnUp { from { transform: translateY(16px); opacity: 0.6; } to { transform: none; opacity: 1; } }
+.fn-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 0.6rem;
+}
+.fn-num {
+  font-family: var(--serif);
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.06em;
+}
+.fn-close {
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 1.5rem;
+  line-height: 1;
+  width: 2rem; height: 2rem;
+  cursor: pointer;
+  border-radius: 8px;
+}
+.fn-close:hover { background: color-mix(in srgb, var(--line) 60%, transparent); color: var(--ink); }
+.fn-body {
+  overflow-y: auto;
+  font-size: 0.95rem;
+  line-height: 1.75;
+  font-family: var(--sans);
+  color: var(--ink);
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Obsidian callouts, rendered vertically */

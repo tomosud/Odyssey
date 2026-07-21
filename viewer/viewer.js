@@ -60,10 +60,10 @@ function inline(raw) {
     // 原文/脚注 は本ビュワー対象外 → プレーン表示
     return `<span class="wref">${esc(label)}</span>`;
   });
-  // footnote markers [12] -> small marker
-  s = s.replace(/\[(\d{1,3})\]/g, '<span class="fnote">[$1]</span>');
-  // tate-chu-yoko: 1〜2桁の半角数字を正立(HTML属性/数値実体参照の中は除外)
-  s = s.replace(/(?<![\d>#&])(\d{1,2})(?![\d])/g, '<span class="tcy">$1</span>');
+  // footnote markers [12] -> タップできるマーカー(data-fn に番号を保持)
+  s = s.replace(/\[(\d{1,3})\]/g, '<a class="fnote" data-fn="$1" role="button" tabindex="0">[$1]</a>');
+  // tate-chu-yoko: 1〜2桁の半角数字を正立(HTML属性・数値実体参照の中は除外)
+  s = s.replace(/(?<![\d>#&"=])(\d{1,2})(?![\d])/g, '<span class="tcy">$1</span>');
   return s;
 }
 
@@ -354,6 +354,68 @@ function saveProgress(book, page, total, heading) {
 }
 
 /* ---------------------------------------------------------------------
+   脚注(Butler原文)— タップで内容を一時表示
+   --------------------------------------------------------------------- */
+const FOOTNOTES_FILE = "Odyssey/01_原文/99_脚注(Footnotes).md";
+let _fnMap = null, _fnPromise = null;
+function parseFootnotes(md) {
+  const map = {};
+  const body = md.replace(/^---[\s\S]*?---\s*/, "");   // frontmatter 除去
+  const blocks = body.split(/\n\s*\n/);                // 空行で分割(1脚注=1ブロック)
+  for (const blk of blocks) {
+    const m = blk.match(/^\s*\[(\d+)\]\s*([\s\S]*)$/);
+    if (!m) continue;
+    let text = m[2].trim().replace(/\s+/g, " ");
+    text = text.replace(/^\[\s*/, "").replace(/\s*\]$/, ""); // 外側の [ ] を除去
+    map[m[1]] = text;
+  }
+  return map;
+}
+function loadFootnotes() {
+  if (_fnMap) return Promise.resolve(_fnMap);
+  if (_fnPromise) return _fnPromise;
+  _fnPromise = fetchText(FOOTNOTES_FILE)
+    .then((md) => { _fnMap = parseFootnotes(md); return _fnMap; })
+    .catch(() => ({}));
+  return _fnPromise;
+}
+
+function ensureFootnotePopup() {
+  let ov = document.getElementById("fnOverlay");
+  if (ov) return ov;
+  ov = el("div", { id: "fnOverlay", class: "fn-overlay", hidden: "" });
+  const sheet = el("div", { class: "fn-sheet", role: "dialog", "aria-label": "脚注" });
+  const head = el("div", { class: "fn-head" },
+    el("span", { class: "fn-num" }, ""),
+    el("button", { class: "fn-close", "aria-label": "閉じる", type: "button" }, "×")
+  );
+  const bodyEl = el("div", { class: "fn-body" }, "");
+  sheet.appendChild(head);
+  sheet.appendChild(bodyEl);
+  ov.appendChild(sheet);
+  ov.addEventListener("click", (e) => { if (e.target === ov) closeFootnote(); });
+  head.querySelector(".fn-close").addEventListener("click", closeFootnote);
+  document.body.appendChild(ov);
+  return ov;
+}
+function closeFootnote() {
+  const ov = document.getElementById("fnOverlay");
+  if (ov) ov.hidden = true;
+}
+async function showFootnote(num) {
+  const ov = ensureFootnotePopup();
+  ov.querySelector(".fn-num").textContent = `脚注 [${num}]`;
+  const bodyEl = ov.querySelector(".fn-body");
+  bodyEl.textContent = "読み込み中…";
+  bodyEl.scrollTop = 0;
+  ov.hidden = false;
+  const map = await loadFootnotes();
+  // 表示中に別の脚注へ切り替わっていないかを確認
+  if (ov.hidden || ov.querySelector(".fn-num").textContent !== `脚注 [${num}]`) return;
+  bodyEl.textContent = (map && map[num]) ? map[num] : "(この脚注は原文に見つかりませんでした)";
+}
+
+/* ---------------------------------------------------------------------
    文字サイズ設定(localStorage)
    --------------------------------------------------------------------- */
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -469,6 +531,8 @@ async function renderWayakuView(book) {
   const entry = state.manifest.wayaku.find((e) => e.book === book);
   if (!entry) return setError("その歌は見つかりませんでした。");
   pager = null;
+  closeFootnote();
+  loadFootnotes();                 // 脚注を先読み(タップ時に即表示)
   setReadingMode(true);
   document.getElementById("backBtn").hidden = false;
   setBusy(`第${book}歌 を読み込み中…`);
@@ -648,6 +712,8 @@ async function renderWayakuView(book) {
   }, { passive: true });
   article.addEventListener("click", (ev) => {
     if (moved) { moved = false; return; }
+    const fn = ev.target.closest(".fnote");                   // 脚注マーカー → 内容を表示
+    if (fn) { ev.preventDefault(); showFootnote(fn.getAttribute("data-fn")); return; }
     if (ev.target.closest("a")) return;                       // リンクは通常遷移
     const sel = window.getSelection && window.getSelection().toString();
     if (sel && sel.length > 0) return;                        // 文字選択中は無視
@@ -684,6 +750,7 @@ async function renderJitenView(slug) {
    Router
    --------------------------------------------------------------------- */
 function route() {
+  closeFootnote();
   const hash = location.hash.replace(/^#\/?/, "");
   const parts = hash.split("/").filter(Boolean);
   if (parts.length === 0) return renderHome();
@@ -694,6 +761,11 @@ function route() {
 
 /* キーボード: 縦書きリーダーのページ送り(← が「次」)*/
 document.addEventListener("keydown", (ev) => {
+  const ov = document.getElementById("fnOverlay");
+  if (ov && !ov.hidden) {                    // 脚注表示中は Esc で閉じる/ページ送りしない
+    if (ev.key === "Escape") { closeFootnote(); ev.preventDefault(); }
+    return;
+  }
   if (!pager) return;
   if (ev.key === "ArrowLeft" || ev.key === "ArrowDown" || ev.key === "PageDown" || ev.key === " ") {
     pager.go(+1); ev.preventDefault();
