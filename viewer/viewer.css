@@ -470,38 +470,54 @@ a:hover { text-decoration: underline; }
 .jiten-search input:focus { outline: none; border-color: var(--accent-soft); }
 .jiten-count { font-size: 0.8rem; color: var(--ink-soft); margin: 0.3rem 0.2rem; }
 
-.jiten-view table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
+/* 索引はカード表示(スマホでも説明が読みやすい) */
+.entry-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 0.7rem;
+  margin-bottom: 1.4rem;
 }
-.jiten-view thead th {
-  position: sticky;
-  top: 120px;
-  background: var(--accent);
-  color: #fff;
-  text-align: right;
-  padding: 0.5rem 0.7rem;
-  font-weight: 600;
+.entry-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.8rem 0.95rem;
+  box-shadow: 0 1px 2px var(--shadow);
+}
+.entry-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.6rem;
+  margin-bottom: 0.35rem;
+}
+.entry-name { font-family: var(--serif); font-weight: 700; font-size: 1.08rem; color: var(--ink); }
+.entry-src { font-size: 0.8rem; color: var(--ink-soft); font-style: italic; }
+.entry-desc { font-size: 0.92rem; line-height: 1.7; color: var(--ink); }
+.entry-app {
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
   font-size: 0.82rem;
-  letter-spacing: 0.06em;
 }
-.jiten-view tbody td {
-  padding: 0.55rem 0.7rem;
-  border-bottom: 1px solid var(--line);
-  vertical-align: top;
-  line-height: 1.6;
+.entry-app-label {
+  flex: 0 0 auto;
+  color: #fff;
+  background: var(--accent-soft);
+  border-radius: 999px;
+  padding: 0.05rem 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
 }
-.jiten-view tbody tr:hover { background: color-mix(in srgb, var(--panel) 60%, var(--bg)); }
-.jiten-view td.c-name { font-family: var(--serif); font-weight: 600; white-space: nowrap; }
-.jiten-view td.c-src { color: var(--ink-soft); font-size: 0.82rem; white-space: nowrap; }
-.jiten-view td.c-app { color: var(--accent); font-size: 0.82rem; white-space: nowrap; }
+.entry-app-val { color: var(--accent); }
 .jiten-view h2 {
   font-family: var(--serif);
   color: var(--accent);
   border-bottom: 1px solid var(--line);
   padding-bottom: 0.3rem;
-  margin: 2rem 0 0.6rem;
+  margin: 1.8rem 0 0.8rem;
+  letter-spacing: 0.06em;
 }
 .jiten-view .callout {
   writing-mode: horizontal-tb;
@@ -542,10 +558,15 @@ mark { background: var(--accent-soft); color: var(--ink); border-radius: 3px; pa
 
 @media (max-width: 640px) {
   .reader-vertical { padding: 1.4rem 0; }
-  .jiten-view thead th { top: 118px; }
 }
-/* スマホはページ送りを主役に、章送りリンクは省いてフッターを広く使う */
 @media (max-width: 520px) {
-  .ch-link { display: none; }
-  .pg-btn { width: 46px; height: 46px; }
+  .ch-link { font-size: 0.68rem; padding: 0.4rem 0.15rem; }
+  .pg-title { font-size: 0.82rem; }
 }
+/* 最終ページ:次の歌がはっきり分かるよう強調 */
+.page-nav.at-end .pg-btn.to-next {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.page-nav.at-start .pg-btn.to-prev { opacity: 0.35; }

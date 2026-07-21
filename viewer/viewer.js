@@ -206,60 +206,57 @@ function renderWayaku(md, entry) {
 function renderJiten(md, entry) {
   const blocks = parseBlocks(md);
   const wrap = el("div", { class: "jiten-view" });
-  const parts = [];
-  const tables = [];
-  for (const b of blocks) {
-    switch (b.type) {
-      case "h":
-        if (b.level === 1) parts.push(`<h1>${inline(b.text)}</h1>`);
-        else parts.push(`<h2>${inline(b.text)}</h2>`);
-        break;
-      case "callout": parts.push(calloutHTML(b)); break;
-      case "table": {
-        const idx = tables.length;
-        tables.push(b);
-        parts.push(`<div data-table="${idx}"></div>`);
-        break;
-      }
-      case "p": if (!/^\s*$/.test(b.text)) parts.push(`<p>${inline(b.text)}</p>`); break;
-      case "hr": break;
-      case "ul": parts.push("<ul>" + b.items.map((it) => `<li>${inline(it)}</li>`).join("") + "</ul>"); break;
-    }
-  }
 
   const search = el("div", { class: "jiten-search" });
   const input = el("input", { type: "search", placeholder: "名前・原文表記・説明で絞り込み…", "aria-label": "検索" });
   const count = el("div", { class: "jiten-count" });
   search.appendChild(input);
 
-  const body = el("div", { html: parts.join("") });
-  // mount tables
-  body.querySelectorAll("[data-table]").forEach((slot) => {
-    const b = tables[+slot.getAttribute("data-table")];
-    slot.replaceWith(buildTable(b));
-  });
+  // タイトル(h1)を取り出す
+  let title = entry.label;
+  const h1b = blocks.find((b) => b.type === "h" && b.level === 1);
+  if (h1b) title = h1b.text;
+
+  const bodyEls = [];
+  for (const b of blocks) {
+    switch (b.type) {
+      case "h":
+        if (b.level === 1) break;                 // タイトルは別で表示
+        bodyEls.push(el("h2", { html: inline(b.text) }));
+        break;
+      case "callout": { const d = el("div", { html: calloutHTML(b) }); bodyEls.push(d.firstElementChild || d); break; }
+      case "table": bodyEls.push(buildCards(b)); break;
+      case "p": if (!/^\s*$/.test(b.text)) bodyEls.push(el("p", { html: inline(b.text) })); break;
+      case "ul": { const ul = el("ul"); b.items.forEach((it) => ul.appendChild(el("li", { html: inline(it) }))); bodyEls.push(ul); break; }
+      case "hr": break;
+    }
+  }
+  const body = el("div", { class: "jiten-body" });
+  bodyEls.forEach((e) => body.appendChild(e));
 
   const doFilter = () => {
     const q = input.value.trim();
     let shown = 0, total = 0;
-    body.querySelectorAll("table").forEach((tbl) => {
-      tbl.querySelectorAll("tbody tr").forEach((tr) => {
-        total++;
-        const text = tr.getAttribute("data-text") || tr.textContent;
-        const hit = q === "" || text.toLowerCase().includes(q.toLowerCase());
-        tr.style.display = hit ? "" : "none";
-        if (hit) shown++;
-        // highlight
-        if (q && hit) highlightRow(tr, q); else clearHighlight(tr);
-      });
+    body.querySelectorAll(".entry-card").forEach((card) => {
+      total++;
+      const text = card.getAttribute("data-text") || card.textContent;
+      const hit = q === "" || text.toLowerCase().includes(q.toLowerCase());
+      card.style.display = hit ? "" : "none";
+      if (hit) shown++;
+      clearMarks(card);
+      if (q && hit) addMarks(card, q);
+    });
+    // 空になった見出しは隠す
+    body.querySelectorAll(".entry-list").forEach((list) => {
+      const anyShown = [...list.querySelectorAll(".entry-card")].some((c) => c.style.display !== "none");
+      const h = list.previousElementSibling;
+      if (h && h.tagName === "H2") h.style.display = anyShown ? "" : "none";
     });
     count.textContent = q ? `${shown} 件 / 全 ${total} 件` : `全 ${total} 件`;
   };
   input.addEventListener("input", doFilter);
 
-  wrap.appendChild(body.querySelector("h1") || el("h1", {}, entry.label));
-  const h1InBody = body.querySelector("h1");
-  if (h1InBody) h1InBody.remove();
+  wrap.appendChild(el("h1", { html: inline(title) }));
   wrap.appendChild(search);
   wrap.appendChild(count);
   wrap.appendChild(body);
@@ -267,45 +264,57 @@ function renderJiten(md, entry) {
   return wrap;
 }
 
-function buildTable(b) {
-  const table = el("table");
-  const thead = el("thead");
-  const htr = el("tr");
-  b.header.forEach((h) => htr.appendChild(el("th", {}, h)));
-  thead.appendChild(htr);
-  const tbody = el("tbody");
-  const classes = ["c-name", "c-src", "c-desc", "c-app"];
+// 事典の各行をスマホで読みやすいカードにする
+function buildCards(b) {
+  const idx = {};
+  b.header.forEach((h, i) => { idx[h.replace(/\s/g, "")] = i; });
+  const iName = idx["名前"] ?? 0, iSrc = idx["原文表記"] ?? 1, iDesc = idx["説明"] ?? 2, iApp = idx["登場"] ?? 3;
+  const list = el("div", { class: "entry-list" });
   b.rows.forEach((row) => {
-    const tr = el("tr");
-    tr.setAttribute("data-text", row.join(" "));
-    row.forEach((cell, ci) => {
-      const td = el("td", { class: classes[ci] || "" });
-      td.innerHTML = inline(cell);
-      tr.appendChild(td);
-    });
-    tbody.appendChild(tr);
+    const card = el("div", { class: "entry-card" });
+    card.setAttribute("data-text", row.join(" "));
+    const head = el("div", { class: "entry-head" }, el("span", { class: "entry-name", html: inline(row[iName] || "") }));
+    if (row[iSrc]) head.appendChild(el("span", { class: "entry-src", html: inline(row[iSrc]) }));
+    card.appendChild(head);
+    if (row[iDesc]) card.appendChild(el("div", { class: "entry-desc", html: inline(row[iDesc]) }));
+    if (row[iApp]) {
+      card.appendChild(el("div", { class: "entry-app" },
+        el("span", { class: "entry-app-label" }, "登場"),
+        el("span", { class: "entry-app-val", html: inline(row[iApp]) })
+      ));
+    }
+    list.appendChild(card);
   });
-  table.appendChild(thead);
-  table.appendChild(tbody);
-  return table;
+  return list;
 }
 
-function highlightRow(tr, q) {
-  clearHighlight(tr);
-  const re = new RegExp("(" + q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ")", "gi");
-  tr.querySelectorAll("td").forEach((td) => {
-    if (td.querySelector("a, span.fnote")) return; // 触らない
-    if (re.test(td.textContent)) {
-      td.innerHTML = td.innerHTML.replace(re, "<mark>$1</mark>");
-    }
-  });
+// 検索ハイライト:テキストノードだけを対象にして tcy/リンクを壊さない
+function clearMarks(root) {
+  root.querySelectorAll("mark").forEach((m) => m.replaceWith(document.createTextNode(m.textContent)));
+  root.normalize();
 }
-function clearHighlight(tr) {
-  tr.querySelectorAll("mark").forEach((m) => {
-    const t = document.createTextNode(m.textContent);
-    m.replaceWith(t);
-  });
-  tr.querySelectorAll("td").forEach((td) => td.normalize());
+function addMarks(root, q) {
+  if (!q) return;
+  const re = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+  const targets = [];
+  let node;
+  while ((node = walker.nextNode())) {
+    if (node.nodeValue && re.test(node.nodeValue)) targets.push(node);
+  }
+  for (const t of targets) {
+    const s = t.nodeValue;
+    const frag = document.createDocumentFragment();
+    let last = 0, m; re.lastIndex = 0;
+    while ((m = re.exec(s))) {
+      if (m.index > last) frag.appendChild(document.createTextNode(s.slice(last, m.index)));
+      const mk = document.createElement("mark"); mk.textContent = m[0]; frag.appendChild(mk);
+      last = m.index + m[0].length;
+      if (m.index === re.lastIndex) re.lastIndex++;
+    }
+    if (last < s.length) frag.appendChild(document.createTextNode(s.slice(last)));
+    t.replaceWith(frag);
+  }
 }
 
 /* ---------------------------------------------------------------------
@@ -556,8 +565,8 @@ async function renderWayakuView(book) {
   const btnPrevCh = prev
     ? el("a", { class: "ch-link", href: `#/wayaku/${prev.book}` }, "前の歌 ▶")
     : el("span", { class: "ch-link disabled" }, "　");
-  const btnFwd = el("button", { class: "pg-btn", type: "button", "aria-label": "次のページ" }, "◀");
-  const btnBack = el("button", { class: "pg-btn", type: "button", "aria-label": "前のページ" }, "▶");
+  const btnFwd = el("button", { class: "pg-btn to-next", type: "button", "aria-label": "次のページ" }, "◀");
+  const btnBack = el("button", { class: "pg-btn to-prev", type: "button", "aria-label": "前のページ" }, "▶");
   const pgTitle = el("div", { class: "pg-title" }, `第${book}歌 ${entry.heading.split(" — ")[0]}`);
   const pgCount = el("div", { class: "pg-count" }, "");
   const nav = el("div", { class: "page-nav" },
@@ -650,9 +659,14 @@ async function renderWayakuView(book) {
     cur = clamp(geo.cw > 0 ? Math.round(-article.scrollLeft / geo.cw) : 0, 0, geo.total - 1);
   }
   function updateUI() {
-    pgCount.textContent = `${cur + 1} / ${geo.total}`;
-    btnFwd.classList.toggle("edge", article.scrollLeft <= -geo.maxScroll + 1 && !next);
-    btnBack.classList.toggle("edge", article.scrollLeft >= -1 && !prev);
+    const atEnd = article.scrollLeft <= -geo.maxScroll + 1;
+    const atStart = article.scrollLeft >= -1;
+    if (atEnd && next) pgCount.textContent = `最終ページ ・ 次の歌へ ◀`;
+    else pgCount.textContent = `${cur + 1} / ${geo.total}`;
+    nav.classList.toggle("at-end", atEnd && !!next);
+    nav.classList.toggle("at-start", atStart && !!prev);
+    btnFwd.classList.toggle("edge", atEnd && !next);
+    btnBack.classList.toggle("edge", atStart && !prev);
   }
   function go(delta) {
     if (delta > 0 && article.scrollLeft <= -geo.maxScroll + 1) { // 末尾 → 次の歌
