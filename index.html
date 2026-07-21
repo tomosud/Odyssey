@@ -5,12 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>オデュッセイア — 縦書きビュワー</title>
   <meta name="description" content="ホメロス『オデュッセイア』(Samuel Butler 英訳からの現代日本語訳)を、読みやすい縦書きで読むビュワー。全24歌の和訳と、人物・地名の索引。" />
+  <!-- キャッシュを読まない(スマホで古い版が表示されるのを防ぐ) -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <meta name="theme-color" content="#f5f1e6" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#1c1915" media="(prefers-color-scheme: dark)" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%238a5a2b'/%3E%3Ctext x='16' y='23' font-size='20' text-anchor='middle' fill='%23f5f1e6' font-family='serif'%3E縦%3C/text%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="viewer/viewer.css" />
+  <!-- 背景色だけ先に当ててチラつきを防ぐ -->
+  <style>
+    html, body { margin: 0; background: #f5f1e6; }
+    @media (prefers-color-scheme: dark) { html, body { background: #1c1915; } }
+  </style>
+  <!-- CSS/JS は毎回別URL(?v=タイムスタンプ)で読み込み、確実に最新版を取得する -->
+  <script>
+    window.__ODYSSEY_V__ = Date.now();
+    (function () {
+      var l = document.createElement("link");
+      l.rel = "stylesheet";
+      l.href = "viewer/viewer.css?v=" + window.__ODYSSEY_V__;
+      document.head.appendChild(l);
+    })();
+  </script>
 </head>
 <body>
   <header class="app-header">
@@ -26,6 +44,12 @@
   </main>
   <div id="extra"></div>
 
-  <script src="viewer/viewer.js"></script>
+  <script>
+    (function () {
+      var s = document.createElement("script");
+      s.src = "viewer/viewer.js?v=" + (window.__ODYSSEY_V__ || Date.now());
+      document.body.appendChild(s);
+    })();
+  </script>
 </body>
 </html>

@@ -12,6 +12,8 @@ const SCRIPT_SRC = (document.currentScript && document.currentScript.src) ||
   new URL("viewer/viewer.js", location.href).href;
 const BASE = new URL(".", SCRIPT_SRC).href; // .../viewer/
 const ROOT = new URL("../", BASE).href;     // repo root (site root)
+// このロードのバージョン(index.html が付与)。fetch のキャッシュ回避に使う。
+const V = (typeof window !== "undefined" && window.__ODYSSEY_V__) || Date.now();
 
 const state = { manifest: null };
 
@@ -36,7 +38,7 @@ const el = (tag, props = {}, ...kids) => {
 const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 async function fetchText(relPath) {
-  const url = ROOT + relPath.split("/").map(encodeURIComponent).join("/");
+  const url = ROOT + relPath.split("/").map(encodeURIComponent).join("/") + "?v=" + V;
   const res = await fetch(url, { cache: "no-cache" });
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}: ${relPath}`);
   return res.text();
@@ -385,6 +387,17 @@ function setReadingMode(on) {
   if (fi) fi.hidden = !on;
 }
 
+// ヘッダー/フッターの実寸を測って CSS 変数に反映し、リーダーの高さを
+// 画面ぴったりにする(タイトル折り返しやセーフエリアで下が欠けるのを防ぐ)。
+function syncChrome() {
+  const header = document.querySelector(".app-header");
+  const foot = document.querySelector(".page-nav");
+  const hh = header ? header.offsetHeight : 52;
+  const fh = foot ? foot.offsetHeight : 60;
+  document.documentElement.style.setProperty("--header-h", hh + "px");
+  document.documentElement.style.setProperty("--footer-h", fh + "px");
+}
+
 function setBusy(msg) {
   app().innerHTML = "";
   app().appendChild(el("div", { class: "status-msg" }, msg || "読み込み中…"));
@@ -492,6 +505,7 @@ async function renderWayakuView(book) {
   );
   extra().innerHTML = "";
   extra().appendChild(nav);
+  syncChrome();  // リーダー高さをヘッダー/フッターの実寸に合わせる
   document.title = `第${book}歌 — ${state.manifest.title}`;
 
   // ---- 初期ページ(章送り指定 > 保存位置 > 先頭)----
@@ -547,6 +561,7 @@ async function renderWayakuView(book) {
     saveProgress(book, cur, geo.total, entry.heading);
   }
   function relayout() {
+    syncChrome();
     layout();
     cur = clamp(cur, 0, geo.total - 1);
     applyScroll(false);
@@ -645,13 +660,16 @@ document.addEventListener("keydown", (ev) => {
   }
 });
 
-/* 画面リサイズ・回転で段組みを組み直す */
+/* 画面リサイズ・回転・ツールバー開閉で段組みを組み直す */
 let _resizeTimer = 0;
-window.addEventListener("resize", () => {
+function onViewportChange() {
   if (!pager) return;
   clearTimeout(_resizeTimer);
   _resizeTimer = setTimeout(() => { if (pager) pager.relayout(); }, 180);
-});
+}
+window.addEventListener("resize", onViewportChange);
+window.addEventListener("orientationchange", onViewportChange);
+if (window.visualViewport) window.visualViewport.addEventListener("resize", onViewportChange);
 
 async function main() {
   document.getElementById("backBtn").addEventListener("click", () => {
@@ -662,7 +680,7 @@ async function main() {
   applyFont();
   setBusy("目次を読み込み中…");
   try {
-    const res = await fetch(BASE + "manifest.json", { cache: "no-cache" });
+    const res = await fetch(BASE + "manifest.json?v=" + V, { cache: "no-cache" });
     if (!res.ok) throw new Error(res.status + " manifest.json");
     state.manifest = await res.json();
   } catch (e) {
