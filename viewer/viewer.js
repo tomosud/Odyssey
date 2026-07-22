@@ -610,10 +610,31 @@ async function renderWayakuView(book) {
       const nat = parseFloat(getComputedStyle(h).lineHeight) || lh;
       h.style.lineHeight = Math.max(1, Math.round(nat / lh)) * lh + "px";
     }
+    snapBoxesToGrid(lh);   // コールアウト・箇条書き等の箱を基準グリッドに合わせる
     const cw = article.clientWidth;
     const maxScroll = Math.max(0, article.scrollWidth - cw);
     const total = Math.max(1, Math.round(maxScroll / cw) + 1);
     geo = { cw, lh, maxScroll, total };
+  }
+
+  // コールアウトや箇条書きの箱は、左右(段方向)の枠・パディング・余白が段幅の
+  // 整数倍でないため、箱の中の段と箱の後ろの本文が基準グリッドからずれて端で切れる。
+  // 箱を「グリッドに透明」にする:右余白で(枠+右パディング)を、左余白で箱全体の
+  // 幅を、それぞれ段幅の整数倍に丸める。箱の中身は段幅の整数倍で組まれているので、
+  // これで箱の中の段も箱の後ろの本文も基準グリッドに乗り続ける。
+  function snapBoxesToGrid(lh) {
+    const boxes = article.querySelectorAll(":scope > .callout, :scope > blockquote, :scope > ul, :scope > hr");
+    boxes.forEach((box) => {
+      box.style.marginRight = "";
+      box.style.marginLeft = "";
+      const cs = getComputedStyle(box);
+      const startFixed = (parseFloat(cs.borderRightWidth) || 0) + (parseFloat(cs.paddingRight) || 0);
+      const mR = ((lh - (startFixed % lh)) % lh);
+      box.style.marginRight = mR + "px";          // 箱の中の先頭段を段境界に合わせる
+      const total = mR + box.offsetWidth;         // = 余白 + 枠 + パディング + 中身(段幅の整数倍)
+      const mL = ((lh - (total % lh)) % lh);
+      box.style.marginLeft = mL + "px";           // 箱の終端を段境界に合わせる
+    });
   }
 
   // いまの表示位置で、本文の段グリッドを画面右端へぴったり合わせる。
