@@ -377,6 +377,19 @@ function loadFootnotes() {
   return _fnPromise;
 }
 
+// 図版(Project Gutenberg #49324, パブリックドメイン)。{figures:{}, byNote:{}}
+const FIGURES_JSON = BASE + "figures.json";
+let _figData = null, _figPromise = null;
+function loadFigures() {
+  if (_figData) return Promise.resolve(_figData);
+  if (_figPromise) return _figPromise;
+  _figPromise = fetch(FIGURES_JSON + "?v=" + V, { cache: "no-cache" })
+    .then((r) => (r.ok ? r.json() : { figures: {}, byNote: {} }))
+    .then((j) => { _figData = j; return j; })
+    .catch(() => ({ figures: {}, byNote: {} }));
+  return _figPromise;
+}
+
 function ensureFootnotePopup() {
   let ov = document.getElementById("fnOverlay");
   if (ov) return ov;
@@ -406,7 +419,7 @@ async function showFootnote(num) {
   bodyEl.textContent = "読み込み中…";
   bodyEl.scrollTop = 0;
   ov.hidden = false;
-  const map = await loadFootnotes();
+  const [map, fig] = await Promise.all([loadFootnotes(), loadFigures()]);
   // 表示中に別の脚注へ切り替わっていないかを確認
   if (ov.hidden || ov.querySelector(".fn-num").textContent !== `脚注 [${num}]`) return;
   const e = map && map[num];
@@ -416,6 +429,24 @@ async function showFootnote(num) {
     if (e.en) bodyEl.appendChild(el("p", { class: "fn-en" }, e.en));
   } else {
     bodyEl.textContent = "(この脚注は見つかりませんでした)";
+  }
+  // 対応する図版があれば添える(直リンク。読み込み失敗した図版は隠す)
+  const figNums = fig && fig.byNote && fig.byNote[num];
+  if (figNums && figNums.length && fig.figures) {
+    const wrap = el("div", { class: "fn-figs" }, el("div", { class: "fn-figs-label" }, "図版"));
+    figNums.forEach((fn) => {
+      const f = fig.figures[fn];
+      if (!f) return;
+      const img = el("img", { loading: "lazy", src: f.url, alt: `図版${fn} ${f.title}` });
+      const figure = el("figure", { class: "fn-fig" },
+        el("a", { href: f.url, target: "_blank", rel: "noopener" }, img),
+        el("figcaption", {}, `図版${fn} ${f.title}`)
+      );
+      img.addEventListener("error", () => { figure.style.display = "none"; });
+      wrap.appendChild(figure);
+    });
+    wrap.appendChild(el("div", { class: "fn-figs-credit" }, "図版: S. Butler『The Authoress of the Odyssey』(Project Gutenberg #49324, パブリックドメイン)"));
+    bodyEl.appendChild(wrap);
   }
 }
 
@@ -536,7 +567,7 @@ async function renderWayakuView(book) {
   if (!entry) return setError("その歌は見つかりませんでした。");
   pager = null;
   closeFootnote();
-  loadFootnotes();                 // 脚注を先読み(タップ時に即表示)
+  loadFootnotes(); loadFigures();  // 脚注・図版を先読み(タップ時に即表示)
   setReadingMode(true);
   document.getElementById("backBtn").hidden = false;
   setBusy(`第${book}歌 を読み込み中…`);

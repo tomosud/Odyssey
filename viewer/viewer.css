@@ -299,7 +299,7 @@ a:hover { text-decoration: underline; }
   writing-mode: horizontal-tb;
   width: 100%;
   max-width: 640px;
-  max-height: 55vh;
+  max-height: 72vh;
   display: flex;
   flex-direction: column;
   background: var(--panel);
@@ -363,6 +363,35 @@ a:hover { text-decoration: underline; }
   color: var(--accent-soft);
   margin-bottom: 0.25rem;
 }
+/* 図版(パブリックドメイン, Project Gutenberg #49324) */
+.fn-figs {
+  margin-top: 0.9rem;
+  padding-top: 0.7rem;
+  border-top: 1px dashed var(--line);
+}
+.fn-figs-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: var(--accent-soft);
+  margin-bottom: 0.5rem;
+}
+.fn-fig { margin: 0 0 0.9rem; }
+.fn-fig a { display: block; }
+.fn-fig img {
+  width: 100%;
+  height: auto;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  display: block;
+}
+.fn-fig figcaption {
+  font-size: 0.76rem;
+  color: var(--ink-soft);
+  margin-top: 0.3rem;
+  line-height: 1.5;
+}
+.fn-figs-credit { font-size: 0.66rem; color: var(--ink-soft); opacity: 0.8; margin-top: 0.2rem; }
 
 /* Obsidian callouts, rendered vertically */
 .callout {
