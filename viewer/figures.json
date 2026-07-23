@@ -1,0 +1,158 @@
+{
+ "figures": {
+  "01": {
+   "title": "オデュッセウスの屋敷平面図",
+   "url": "https://www.gutenberg.org/cache/epub/49324/images/img_p017.jpg"
+  },
+  "02": {
+   "title": "トラーパニとエリュクス山の地図",
+   "url": "https://www.gutenberg.org/cache/epub/49324/images/img_p164.jpg"
+  },
+  "03": {
+   "title": "レイトロン港",
+   "url": "https://www.gutenberg.org/cache/epub/49324/images/img_p166.jpg"
+  },
+  "04": {
+   "title": "レイトロン港口",
+   "url": "https://www.gutenberg.org/cache/epub/49324/images/img_p167.jpg"
+  },
+  "05": {
+   "title": "イオニア諸島地図",
+   "url": "https://www.gutenberg.org/cache/epub/49324/images/img_p175.jpg"
+  },
+  "06": {
+   "title": "エガディ諸島地図",
+   "url": "https://www.gutenberg.org/cache/epub/49324/images/img_p177.jpg"
+  },
+  "07": {
+   "title": "ポリュペモスの洞窟",
+   "url": "https://www.gutenberg.org/cache/epub/49324/images/img_p042.jpg"
+  },
+  "08": {
+   "title": "洞窟内のバトラーとシニョール・スガメリ",
+   "url": "https://www.gutenberg.org/cache/epub/49324/images/img_p043.jpg"
+  },
+  "09": {
+   "title": "エリュクス山から見たトラーパニとマレッティモ",
+   "url": "https://www.gutenberg.org/cache/epub/49324/images/img_p178.jpg"
+  },
+  "10": {
+   "title": "「海上で最も高く」",
+   "url": "https://www.gutenberg.org/cache/epub/49324/images/img_p181.jpg"
+  },
+  "11": {
+   "title": "オデュッセウス航海図",
+   "url": "https://www.gutenberg.org/cache/epub/49324/images/img_p184.jpg"
+  },
+  "12": {
+   "title": "チェファルーの海岸城壁",
+   "url": "https://www.gutenberg.org/cache/epub/49324/images/img_p192.jpg"
+  },
+  "13": {
+   "title": "チェファルー背後の巨石遺構",
+   "url": "https://www.gutenberg.org/cache/epub/49324/images/img_p193.jpg"
+  },
+  "14": {
+   "title": "オデュッセウスのブローチ意匠に関係する貨幣",
+   "url": "https://www.gutenberg.org/cache/epub/49324/images/img_p216.jpg"
+  },
+  "15": {
+   "title": "関連する貨幣図版",
+   "url": "https://www.gutenberg.org/cache/epub/49324/images/img_p217.jpg"
+  }
+ },
+ "byNote": {
+  "13": [
+   "01"
+  ],
+  "78": [
+   "06",
+   "07",
+   "08",
+   "13",
+   "02"
+  ],
+  "54": [
+   "03",
+   "04"
+  ],
+  "75": [
+   "02",
+   "06",
+   "05"
+  ],
+  "81": [
+   "06",
+   "11",
+   "07"
+  ],
+  "80": [
+   "07",
+   "08"
+  ],
+  "48": [
+   "02",
+   "05",
+   "06",
+   "09",
+   "10"
+  ],
+  "103": [
+   "11"
+  ],
+  "100": [
+   "11",
+   "12"
+  ],
+  "5": [
+   "03",
+   "04",
+   "02"
+  ],
+  "29": [
+   "05"
+  ],
+  "34": [
+   "01"
+  ],
+  "51": [
+   "02"
+  ],
+  "64": [
+   "02"
+  ],
+  "66": [
+   "01"
+  ],
+  "79": [
+   "11"
+  ],
+  "83": [
+   "11"
+  ],
+  "84": [
+   "11"
+  ],
+  "88": [
+   "11"
+  ],
+  "99": [
+   "11"
+  ],
+  "102": [
+   "11"
+  ],
+  "162": [
+   "01"
+  ],
+  "163": [
+   "01"
+  ],
+  "169": [
+   "01"
+  ],
+  "62": [
+   "13"
+  ]
+ }
+}
