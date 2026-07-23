@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>図版チェック — オデュッセイア縦書きビュワー</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<style>
+  :root { color-scheme: light dark; }
+  body { margin:0; font-family: system-ui, "Hiragino Kaku Gothic ProN", sans-serif; background:#1c1915; color:#ece3d3; }
+  header { position:sticky; top:0; background:#241f1a; border-bottom:1px solid #3a332a; padding:0.9rem 1rem; z-index:2; }
+  h1 { font-size:1.1rem; margin:0 0 0.3rem; }
+  .summary { font-size:0.9rem; color:#a99d89; }
+  .summary b.okc { color:#8fbf6a; } .summary b.ngc { color:#e0765a; }
+  main { max-width:900px; margin:0 auto; padding:1rem; display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:1rem; }
+  .fig { background:#241f1a; border:1px solid #3a332a; border-radius:12px; padding:0.7rem; }
+  figcaption { font-size:0.9rem; margin-bottom:0.5rem; line-height:1.5; }
+  .n { color:#d9a86a; font-weight:700; margin-right:0.4rem; }
+  .notes { display:block; font-size:0.72rem; color:#a99d89; margin-top:0.2rem; }
+  .fig img { width:100%; height:auto; background:#fff; border-radius:6px; display:block; min-height:40px; }
+  .fig img[data-s="ng"] { display:none; }
+  .status { font-size:0.78rem; margin-top:0.4rem; }
+  .status[data-s="ok"] { color:#8fbf6a; } .status[data-s="ng"] { color:#e0765a; } .status[data-s="pending"] { color:#a99d89; }
+  .url { display:block; font-size:0.68rem; color:#7fa8c9; word-break:break-all; margin-top:0.3rem; }
+</style>
+</head>
+<body>
+<header>
+  <h1>図版チェック(Project Gutenberg #49324)</h1>
+  <div class="summary">読み込み成功 <b class="okc" id="ok">0</b> / 失敗 <b class="ngc" id="ng">0</b> / 全 <b id="total">15</b>。各図版が下に画像として表示されれば、直リンク方式で組み込めます。</div>
+</header>
+<main>
+    <figure class="fig">
+      <figcaption><span class="n">図版01</span> オデュッセウスの屋敷平面図<span class="notes">対応脚注: [13]、[162]、[163]、[169]</span></figcaption>
+      <img loading="lazy" src="https://www.gutenberg.org/cache/epub/49324/images/img_p017.jpg" alt="図版01 オデュッセウスの屋敷平面図"
+           onload="ok(this)" onerror="ng(this)">
+      <div class="status" data-s="pending">読み込み中…</div>
+      <a class="url" href="https://www.gutenberg.org/cache/epub/49324/images/img_p017.jpg" target="_blank" rel="noopener">https://www.gutenberg.org/cache/epub/49324/images/img_p017.jpg</a>
+    </figure>
+    <figure class="fig">
+      <figcaption><span class="n">図版02</span> トラーパニとエリュクス山の地図<span class="notes">対応脚注: [48]、[51]、[64]、[75]、[78]</span></figcaption>
+      <img loading="lazy" src="https://www.gutenberg.org/cache/epub/49324/images/img_p164.jpg" alt="図版02 トラーパニとエリュクス山の地図"
+           onload="ok(this)" onerror="ng(this)">
+      <div class="status" data-s="pending">読み込み中…</div>
+      <a class="url" href="https://www.gutenberg.org/cache/epub/49324/images/img_p164.jpg" target="_blank" rel="noopener">https://www.gutenberg.org/cache/epub/49324/images/img_p164.jpg</a>
+    </figure>
+    <figure class="fig">
+      <figcaption><span class="n">図版03</span> レイトロン港<span class="notes">対応脚注: [5]、[54]</span></figcaption>
+      <img loading="lazy" src="https://www.gutenberg.org/cache/epub/49324/images/img_p166.jpg" alt="図版03 レイトロン港"
+           onload="ok(this)" onerror="ng(this)">
+      <div class="status" data-s="pending">読み込み中…</div>
+      <a class="url" href="https://www.gutenberg.org/cache/epub/49324/images/img_p166.jpg" target="_blank" rel="noopener">https://www.gutenberg.org/cache/epub/49324/images/img_p166.jpg</a>
+    </figure>
+    <figure class="fig">
+      <figcaption><span class="n">図版04</span> レイトロン港口<span class="notes">対応脚注: [5]、[54]</span></figcaption>
+      <img loading="lazy" src="https://www.gutenberg.org/cache/epub/49324/images/img_p167.jpg" alt="図版04 レイトロン港口"
+           onload="ok(this)" onerror="ng(this)">
+      <div class="status" data-s="pending">読み込み中…</div>
+      <a class="url" href="https://www.gutenberg.org/cache/epub/49324/images/img_p167.jpg" target="_blank" rel="noopener">https://www.gutenberg.org/cache/epub/49324/images/img_p167.jpg</a>
+    </figure>
+    <figure class="fig">
+      <figcaption><span class="n">図版05</span> イオニア諸島地図<span class="notes">対応脚注: [29]、[48]、[75]</span></figcaption>
+      <img loading="lazy" src="https://www.gutenberg.org/cache/epub/49324/images/img_p175.jpg" alt="図版05 イオニア諸島地図"
+           onload="ok(this)" onerror="ng(this)">
+      <div class="status" data-s="pending">読み込み中…</div>
+      <a class="url" href="https://www.gutenberg.org/cache/epub/49324/images/img_p175.jpg" target="_blank" rel="noopener">https://www.gutenberg.org/cache/epub/49324/images/img_p175.jpg</a>
+    </figure>
+    <figure class="fig">
+      <figcaption><span class="n">図版06</span> エガディ諸島地図<span class="notes">対応脚注: [48]、[75]、[78]、[81]</span></figcaption>
+      <img loading="lazy" src="https://www.gutenberg.org/cache/epub/49324/images/img_p177.jpg" alt="図版06 エガディ諸島地図"
+           onload="ok(this)" onerror="ng(this)">
+      <div class="status" data-s="pending">読み込み中…</div>
+      <a class="url" href="https://www.gutenberg.org/cache/epub/49324/images/img_p177.jpg" target="_blank" rel="noopener">https://www.gutenberg.org/cache/epub/49324/images/img_p177.jpg</a>
+    </figure>
+    <figure class="fig">
+      <figcaption><span class="n">図版07</span> ポリュペモスの洞窟<span class="notes">対応脚注: [78]、[80]、[81]</span></figcaption>
+      <img loading="lazy" src="https://www.gutenberg.org/cache/epub/49324/images/img_p042.jpg" alt="図版07 ポリュペモスの洞窟"
+           onload="ok(this)" onerror="ng(this)">
+      <div class="status" data-s="pending">読み込み中…</div>
+      <a class="url" href="https://www.gutenberg.org/cache/epub/49324/images/img_p042.jpg" target="_blank" rel="noopener">https://www.gutenberg.org/cache/epub/49324/images/img_p042.jpg</a>
+    </figure>
+    <figure class="fig">
+      <figcaption><span class="n">図版08</span> 洞窟内のバトラーとシニョール・スガメリ<span class="notes">対応脚注: [78]、[80]</span></figcaption>
+      <img loading="lazy" src="https://www.gutenberg.org/cache/epub/49324/images/img_p043.jpg" alt="図版08 洞窟内のバトラーとシニョール・スガメリ"
+           onload="ok(this)" onerror="ng(this)">
+      <div class="status" data-s="pending">読み込み中…</div>
+      <a class="url" href="https://www.gutenberg.org/cache/epub/49324/images/img_p043.jpg" target="_blank" rel="noopener">https://www.gutenberg.org/cache/epub/49324/images/img_p043.jpg</a>
+    </figure>
+    <figure class="fig">
+      <figcaption><span class="n">図版09</span> エリュクス山から見たトラーパニとマレッティモ<span class="notes">対応脚注: [48]</span></figcaption>
+      <img loading="lazy" src="https://www.gutenberg.org/cache/epub/49324/images/img_p178.jpg" alt="図版09 エリュクス山から見たトラーパニとマレッティモ"
+           onload="ok(this)" onerror="ng(this)">
+      <div class="status" data-s="pending">読み込み中…</div>
+      <a class="url" href="https://www.gutenberg.org/cache/epub/49324/images/img_p178.jpg" target="_blank" rel="noopener">https://www.gutenberg.org/cache/epub/49324/images/img_p178.jpg</a>
+    </figure>
+    <figure class="fig">
+      <figcaption><span class="n">図版10</span> 「海上で最も高く」<span class="notes">対応脚注: [48]</span></figcaption>
+      <img loading="lazy" src="https://www.gutenberg.org/cache/epub/49324/images/img_p181.jpg" alt="図版10 「海上で最も高く」"
+           onload="ok(this)" onerror="ng(this)">
+      <div class="status" data-s="pending">読み込み中…</div>
+      <a class="url" href="https://www.gutenberg.org/cache/epub/49324/images/img_p181.jpg" target="_blank" rel="noopener">https://www.gutenberg.org/cache/epub/49324/images/img_p181.jpg</a>
+    </figure>
+    <figure class="fig">
+      <figcaption><span class="n">図版11</span> オデュッセウス航海図<span class="notes">対応脚注: [79]、[81]、[83]、[84]、[88]、[99]、[100]、[102]、[103]</span></figcaption>
+      <img loading="lazy" src="https://www.gutenberg.org/cache/epub/49324/images/img_p184.jpg" alt="図版11 オデュッセウス航海図"
+           onload="ok(this)" onerror="ng(this)">
+      <div class="status" data-s="pending">読み込み中…</div>
+      <a class="url" href="https://www.gutenberg.org/cache/epub/49324/images/img_p184.jpg" target="_blank" rel="noopener">https://www.gutenberg.org/cache/epub/49324/images/img_p184.jpg</a>
+    </figure>
+    <figure class="fig">
+      <figcaption><span class="n">図版12</span> チェファルーの海岸城壁<span class="notes">対応脚注: [100]</span></figcaption>
+      <img loading="lazy" src="https://www.gutenberg.org/cache/epub/49324/images/img_p192.jpg" alt="図版12 チェファルーの海岸城壁"
+           onload="ok(this)" onerror="ng(this)">
+      <div class="status" data-s="pending">読み込み中…</div>
+      <a class="url" href="https://www.gutenberg.org/cache/epub/49324/images/img_p192.jpg" target="_blank" rel="noopener">https://www.gutenberg.org/cache/epub/49324/images/img_p192.jpg</a>
+    </figure>
+    <figure class="fig">
+      <figcaption><span class="n">図版13</span> チェファルー背後の巨石遺構<span class="notes">対応脚注: [62]、[78]</span></figcaption>
+      <img loading="lazy" src="https://www.gutenberg.org/cache/epub/49324/images/img_p193.jpg" alt="図版13 チェファルー背後の巨石遺構"
+           onload="ok(this)" onerror="ng(this)">
+      <div class="status" data-s="pending">読み込み中…</div>
+      <a class="url" href="https://www.gutenberg.org/cache/epub/49324/images/img_p193.jpg" target="_blank" rel="noopener">https://www.gutenberg.org/cache/epub/49324/images/img_p193.jpg</a>
+    </figure>
+    <figure class="fig">
+      <figcaption><span class="n">図版14</span> オデュッセウスのブローチ意匠に関係する貨幣<span class="notes">対応脚注: (貨幣図版)</span></figcaption>
+      <img loading="lazy" src="https://www.gutenberg.org/cache/epub/49324/images/img_p216.jpg" alt="図版14 オデュッセウスのブローチ意匠に関係する貨幣"
+           onload="ok(this)" onerror="ng(this)">
+      <div class="status" data-s="pending">読み込み中…</div>
+      <a class="url" href="https://www.gutenberg.org/cache/epub/49324/images/img_p216.jpg" target="_blank" rel="noopener">https://www.gutenberg.org/cache/epub/49324/images/img_p216.jpg</a>
+    </figure>
+    <figure class="fig">
+      <figcaption><span class="n">図版15</span> 関連する貨幣図版<span class="notes">対応脚注: (貨幣図版)</span></figcaption>
+      <img loading="lazy" src="https://www.gutenberg.org/cache/epub/49324/images/img_p217.jpg" alt="図版15 関連する貨幣図版"
+           onload="ok(this)" onerror="ng(this)">
+      <div class="status" data-s="pending">読み込み中…</div>
+      <a class="url" href="https://www.gutenberg.org/cache/epub/49324/images/img_p217.jpg" target="_blank" rel="noopener">https://www.gutenberg.org/cache/epub/49324/images/img_p217.jpg</a>
+    </figure>
+
+</main>
+<script>
+  var okN=0, ngN=0;
+  function upd(){ document.getElementById('ok').textContent=okN; document.getElementById('ng').textContent=ngN; }
+  function ok(img){ img.setAttribute('data-s','ok'); var s=img.nextElementSibling; s.textContent='✓ 表示OK'; s.setAttribute('data-s','ok'); okN++; upd(); }
+  function ng(img){ img.setAttribute('data-s','ng'); var s=img.nextElementSibling; s.textContent='✕ 読み込み失敗(ブロック/リンク切れ)'; s.setAttribute('data-s','ng'); ngN++; upd(); }
+</script>
+</body>
+</html>
