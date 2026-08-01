@@ -20,7 +20,7 @@ TLVは反射光専用ではない。Movable Lightの直接光を、voxel位置�
 各viewにInner／Outerの2 cascadeを持ち、既定は各64³、距離は1500／5000 uu。各cascadeの`Ambient`／`Directional` 3D textureから圧縮Two-band SHを復元する。
 
 ```mermaid
-flowchart LR
+flowchart TD
     L[Movable Lights] --> V[voxel位置で減衰・shadow]
     V --> SH[Ambient / Directionalへ圧縮]
     SH --> TLV[Inner / Outer TLV]
@@ -39,4 +39,3 @@ TLV、Lumen Translucency GI Volume、SkyLight、Reflection Captureは別経路�
 BSDF、Lighting Mode、Blend Modeを分離する。native Slabは透過coatやlayerを構築できる。legacy Thin TranslucentのSubstrate変換はSlabを使い、legacy側にはTranslucent Blend、Surface ForwardShading等の制約がある。
 
 Substrate用blendにはGrey Transmittance、Colored Transmittance、Colored Transmittance Onlyがあり、これはLighting計算法ではなくframebuffer合成規則である。
-

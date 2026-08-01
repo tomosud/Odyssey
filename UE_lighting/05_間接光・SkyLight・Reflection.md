@@ -17,7 +17,7 @@ GIを無効化してもSkyLightは環境Diffuseを提供できる。Movable SkyL
 Reflection Captureはcapture位置からcubemapを作り、roughnessに応じたprefilter／mipを持つ。複数captureはobject／pixel位置、capture influence、parallax correction等に応じて選択・blendされる。GPUではReflection Cubemap Arrayに複数captureを格納し、indexとweightを使って連続的に合成する。
 
 ```mermaid
-flowchart LR
+flowchart TD
     RC[Reflection Capture actors] --> CUBE[Captured cubemaps]
     CUBE --> PREF[Specular prefilter / mip]
     PREF --> ARR[Reflection Cubemap Array]
@@ -30,4 +30,3 @@ flowchart LR
 ## SkyLight realtime capture
 
 Realtime Captureと事前生成／Specified Cubemapではsource更新方法が異なるが、利用段階ではDiffuse用低周波表現とSpecular用cubemap表現へ展開される。SHは主にDiffuse irradiance近似であり、鮮明な反射をSHだけで表すものではない。
-

@@ -263,7 +263,7 @@ Lumen使用時は、SkyLightがLumenのDiffuse環境へ入り、SkyLight cubemap
 TLVへの注入時にはvoxel位置でLightの距離、Spot cone、shadow等を計算する。しかしMaterial固有のNormal、Roughness、F0はまだ分からないため、特定surfaceの完全なBSDF shadingを済ませるわけではない。Lightの色と方向を低周波表現へ圧縮し、後でMaterialがsampleする。
 
 ```mermaid
-flowchart LR
+flowchart TD
     L["Point / Spot / Directional Light"] --> V["voxel位置で<br/>減衰・shadow等を計算"]
     V --> T["Ambient + Directionalへ圧縮<br/>TLV 3D texture"]
     T --> M["Translucent pixel / vertexでsample<br/>Diffuse Color・Normalへ適用"]
@@ -352,7 +352,7 @@ TLVは、Translucent geometryそのものをvoxel化したものではない。�
 TLVはworld全体を固定volumeで覆わず、Viewごとにカメラを追従する2つのcascadeを作る。
 
 ```mermaid
-flowchart LR
+flowchart TD
     CAM["Camera"]
     INNER["Inner Cascade<br/>0～1500 uu<br/>64 × 64 × 64 voxel"]
     OUTER["Outer Cascade<br/>1500～5000 uu<br/>64 × 64 × 64 voxel"]

@@ -5,7 +5,7 @@
 Opaque／Masked MaterialはBase Passでsurface属性をGBuffer／Substrate material bufferへexportする。Direct Lightの最終色をすべてここで計算するわけではない。
 
 ```mermaid
-flowchart LR
+flowchart TD
     GEO[Geometry] --> MAT[Material evaluation]
     MAT --> BUF[GBuffer / Substrate buffer]
     BUF --> DL[Deferred Direct Lighting]
@@ -39,4 +39,3 @@ Closureは「そのpixelでLighting評価可能な一つの散乱応答単位」
 ## SceneColorへの出力
 
 各passで得たDiffuse、Specular、Transmission、Emissive等をLighting accumulatorへ統合し、SceneColorのPreExposure尺度に揃えて加算する。
-

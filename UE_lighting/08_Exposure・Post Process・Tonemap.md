@@ -26,7 +26,7 @@ Standard ACESはTonemapping Method、ACES 2.0はそのOutput Transform version�
 SDRとHDRは「同じ完成Tonemap後にencodingだけ分岐」ではない。同じscene inputとACES 2.0 algorithmを共有するが、target peak、gamut、output conditionが異なるためOutput Transform結果も異なる。
 
 ```mermaid
-flowchart LR
+flowchart TD
     SC[Exposed / graded scene color] --> COND{Display condition}
     COND -->|SDR 100 nit| SDR[ACES 2.0 SDR Output Transform]
     COND -->|HDR display peak| HDR[ACES 2.0 HDR Output Transform]
@@ -36,4 +36,3 @@ flowchart LR
 ```
 
 PQはlinear nitsを信号値へ符号化するEOTF／inverse EOTF関係であり、Tonemapそのものではない。
-
