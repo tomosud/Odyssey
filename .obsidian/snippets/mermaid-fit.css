@@ -1,0 +1,42 @@
+/*
+ * Keep Mermaid SVGs inside the Obsidian note pane.
+ * The explicit width/max-width/height combination prevents Obsidian or a
+ * theme from rendering the intrinsic SVG width beyond the visible pane.
+ */
+.markdown-reading-view .mermaid,
+.markdown-source-view.mod-cm6 .mermaid,
+.markdown-rendered .mermaid {
+  display: block;
+  box-sizing: border-box;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  text-align: center;
+}
+
+.markdown-reading-view .mermaid > svg,
+.markdown-source-view.mod-cm6 .mermaid > svg,
+.markdown-rendered .mermaid > svg {
+  display: block;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  margin-inline: auto;
+}
+
+/* Do not let an embedded note reintroduce a wider intrinsic SVG size. */
+.markdown-embed .mermaid > svg {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+@media print {
+  .mermaid > svg {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    height: auto !important;
+    page-break-inside: avoid;
+  }
+}
